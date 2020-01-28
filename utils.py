@@ -14,55 +14,14 @@ from pandas.api.types import is_datetime64_any_dtype as is_datetime
 from pandas.api.types import is_categorical_dtype
 
 
-def reduce_mem_usage(df, use_float16=False):
+def get_error(v1, v2):
 
-    start_mem = df.memory_usage().sum() / 1024 ** 2
-    print('Memory usage of dataframe is {:.2f} MB'.format(start_mem))
-
-    for col in df.columns:
-        if is_datetime(df[col]) or is_categorical_dtype(df[col]):
-            continue
-        col_type = df[col].dtype
-
-        if col_type != object:
-            c_min = df[col].min()
-            c_max = df[col].max()
-            if str(col_type)[:3] == 'int':
-                if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
-                    df[col] = df[col].astype(np.int8)
-                elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
-                    df[col] = df[col].astype(np.int16)
-                elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
-                    df[col] = df[col].astype(np.int32)
-                elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:
-                    df[col] = df[col].astype(np.int64)
-            else:
-                if use_float16 and c_min > np.finfo(np.float16).min and c_max < np.finfo(np.float16).max:
-                    df[col] = df[col].astype(np.float16)
-                elif c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
-                    df[col] = df[col].astype(np.float32)
-                else:
-                    df[col] = df[col].astype(np.float64)
-        else:
-            df[col] = df[col].astype('category')
-
-    end_mem = df.memory_usage().sum() / 1024 ** 2
-    print('Memory usage after optimization is: {:.2f} MB'.format(end_mem))
-    print('Decreased by {:.1f}%'.format(100 * (start_mem - end_mem) / start_mem))
-
-    return df
-
-
-def get_error(v):
-
-    v.dropna(inplace=True)
-    vv = v.values
-    rmse = sqrt(mean_squared_log_error(vv[:, 0], vv[:, 1]))
+    rmse = sqrt(mean_squared_log_error(v1, v2))
 
     return rmse
 
 
-def prepare_data_glb(x, building_data, weather_data):
+def prepare_data_glb(x, building_data, weather_data, site=None, meter=None):
 
     df = x.merge(building_data, on='building_id', how='left')
     df = df.merge(weather_data, on=['site_id', 'timestamp'], how='left')
@@ -76,6 +35,12 @@ def prepare_data_glb(x, building_data, weather_data):
         mask = (df['site_id'] == 0) & (df['meter'] == 0)
         df.loc[mask, 'meter_reading'] = df.loc[mask, 'meter_reading'] * 0.2931
         df['meter_reading'] = np.log1p(df['meter_reading'])
+
+    if site is not None:
+        df = df[df['site_id'].isin([site])]
+
+    if meter is not None:
+        df = df[df['meter'].isin([meter])]
 
     return df
 
@@ -95,10 +60,12 @@ def feature_engineering(df):
     for w in settings:
         df['sin_' + str(w)] = np.square(np.sin(df.index.dayofyear.astype('float64') / 365 * w * math.pi).values)
 
-    encounter_features = ['primary_use']
-    le = LabelEncoder()
-    for ef in encounter_features:
-        df[ef] = le.fit_transform(df[ef])
+    primary_use_map = {'Education': 1, 'Office': 2, 'Entertainment/public assembly': 3, 'Lodging/residential': 4,
+                       'Public services': 5, 'Healthcare': 6, 'Other': 7, 'Parking': 8, 'Manufacturing/industrial': 9,
+                       'Food sales and service': 10, 'Retail': 11, 'Warehouse/storage': 12, 'Services': 13,
+                       'Technology/science': 14, 'Utility': 15, 'Religious worship': 16}
+
+    df['primary_use'] = df['primary_use'].map(primary_use_map).astype(np.uint8)
 
     print('Weekday-hour-sins is done!')
 
@@ -202,3 +169,44 @@ def sigma_filter(df, tolerance=3):
     df = df.merge(stats[['median', 'min', 'max']], left_on=['building_id', 'meter', 'timestamp'], right_index=True)
 
     return df[(df.meter_reading <= df['max']) & (df.meter_reading >= df['min'])]
+
+
+def get_seasonality_model(df, model=None):
+
+    settings = {
+        'col_name_x':   ['sin_1', 'air_temperature'],
+        'col_name_y':   ['meter_reading'],
+        'months_bundle': [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]],
+        'days_bundle':  [[0, 1, 2, 3, 4, 5, 6]],
+        'hours_bundle': [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]],
+        'model': dict()
+    }
+
+    sins = [1]
+    for w in sins:
+        df['sin_' + str(w)] = np.square(np.sin(df.index.dayofyear.astype('float64') / 365 * w * math.pi).values)
+
+    y_pred = np.zeros(len(df))
+    x_train = df[settings['col_name_x']]
+
+    if model is None:
+        y_train = df[settings['col_name_y']]
+
+    for m in range(len(settings['months_bundle'])):
+        for d in range(len(settings['days_bundle'])):
+            for h in range(len(settings['hours_bundle'])):
+
+                mask = (np.isin(x_train.index.month,  settings['months_bundle'][m])) & \
+                       (np.isin(x_train.index.dayofweek,  settings['days_bundle'][d])) & \
+                       (np.isin(x_train.index.hour, settings['hours_bundle'][h]))
+
+                if any(mask):
+
+                    if model is None:
+                        model = LinearRegression()
+                        model.fit(x_train[mask].values, y_train[mask].values)
+
+                    y_m = model.predict(x_train[mask].values)
+                    y_pred[mask] = y_m[:, 0]
+
+    return model, y_pred
