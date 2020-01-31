@@ -926,14 +926,16 @@ def sigma_filter(df, tolerance=2, rolling_window=168):
 df_train_clean = manual_filtering(df_train)
 # df_train_clean = sigma_filter(df_train)
 
+# Save file
+result_file_name = "train_manually_filtered"
+
 print(df_train_clean.head())
 df_train_clean.info(verbose=True)
 
 if 'index' in df_train_clean:
     df_train_clean.drop(columns=['index'], inplace=True)
 
-# Save file
-result_file_name = "train_manually_filtered"
+
 
 df_train_clean.to_csv(clean_folder + result_file_name + '.csv', date_format='%Y%m%d %H:%M',
                       float_format='%.2f', index=False)
