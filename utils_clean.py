@@ -54,43 +54,43 @@ def manual_filtering_site_0(df_train):
     df_train['IsFiltered'] = 0
 
     # meter 0
-    print('[Site 0 - Electricity] Filtering zeros')
-    df_train.loc[df_train.query('meter == 0 and timestamp < "2016-05-21 00:00:00"').index, 'IsFiltered'] = 1
-
-    print('[Site 0 - Electricity] Filtering outliers')
-    df_train.loc[df_train.query(
-        'building_id == 0 and meter == 0 and (meter_reading > 400 or meter_reading < -400)').index, 'IsFiltered'] = 1
-    df_train.loc[df_train.query('building_id == 18 and meter == 0 and meter_reading < 1000').index, 'IsFiltered'] = 1
-    df_train.loc[df_train.query('building_id == 22 and meter == 0 and meter_reading == 0').index, 'IsFiltered'] = 1
-    df_train.loc[df_train.query('building_id == 25 and meter == 0 and meter_reading <= 0').index, 'IsFiltered'] = 1
-    df_train.loc[df_train.query(
-        'building_id == 38 and meter == 0 and (meter_reading > 2000 or meter_reading < 0)').index, 'IsFiltered'] = 1
-    df_train.loc[df_train.query(
-        'building_id == 41 and meter == 0 and (meter_reading > 2000 or meter_reading < 0)').index, 'IsFiltered'] = 1
-    df_train.loc[df_train.query('building_id == 53 and meter == 0 and meter_reading == 0').index, 'IsFiltered'] = 1
-    df_train.loc[df_train.query(
-        'building_id == 77 and meter == 0 and (meter_reading > 1000 or meter_reading < 0)').index, 'IsFiltered'] = 1
-    df_train.loc[df_train.query(
-        'building_id == 78 and meter == 0 and (meter_reading > 20000 or meter_reading < 0)').index, 'IsFiltered'] = 1
-    df_train.loc[df_train.query(
-        'building_id == 86 and meter == 0 and (meter_reading > 1000 or meter_reading < 0)').index, 'IsFiltered'] = 1
-    df_train.loc[df_train.query('building_id == 101 and meter == 0 and meter_reading > 400').index, 'IsFiltered'] = 1
+    # print('[Site 0 - Electricity] Filtering zeros')
+    # df_train.loc[df_train.query('meter == 0 and timestamp < "2016-05-21 00:00:00"').index, 'IsFiltered'] = 1
+    #
+    # print('[Site 0 - Electricity] Filtering outliers')
+    # df_train.loc[df_train.query(
+    #     'building_id == 0 and meter == 0 and (meter_reading > 400 or meter_reading < -400)').index, 'IsFiltered'] = 1
+    # df_train.loc[df_train.query('building_id == 18 and meter == 0 and meter_reading < 1000').index, 'IsFiltered'] = 1
+    # df_train.loc[df_train.query('building_id == 22 and meter == 0 and meter_reading == 0').index, 'IsFiltered'] = 1
+    # df_train.loc[df_train.query('building_id == 25 and meter == 0 and meter_reading <= 0').index, 'IsFiltered'] = 1
+    # df_train.loc[df_train.query(
+    #     'building_id == 38 and meter == 0 and (meter_reading > 2000 or meter_reading < 0)').index, 'IsFiltered'] = 1
+    # df_train.loc[df_train.query(
+    #     'building_id == 41 and meter == 0 and (meter_reading > 2000 or meter_reading < 0)').index, 'IsFiltered'] = 1
+    # df_train.loc[df_train.query('building_id == 53 and meter == 0 and meter_reading == 0').index, 'IsFiltered'] = 1
+    # df_train.loc[df_train.query(
+    #     'building_id == 77 and meter == 0 and (meter_reading > 1000 or meter_reading < 0)').index, 'IsFiltered'] = 1
+    # df_train.loc[df_train.query(
+    #     'building_id == 78 and meter == 0 and (meter_reading > 20000 or meter_reading < 0)').index, 'IsFiltered'] = 1
+    # df_train.loc[df_train.query(
+    #     'building_id == 86 and meter == 0 and (meter_reading > 1000 or meter_reading < 0)').index, 'IsFiltered'] = 1
+    # df_train.loc[df_train.query('building_id == 101 and meter == 0 and meter_reading > 400').index, 'IsFiltered'] = 1
 
     # meter 1
-    #
-    # print('[Site 0 - Chilled Water] Filtering leading constant values')
-    # site0_meter1_thresholds = {
-    #     50: [7, 9, 43, 60, 75, 95, 97, 98]
-    # }
-    #
-    # for threshold in site0_meter1_thresholds:
-    #     for building_id in site0_meter1_thresholds[threshold]:
-    #         filtered_idx = filter2(df_train, building_id, 1, threshold)
-    #         df_train.loc[filtered_idx, 'IsFiltered'] = 1
-    #
-    # print('[Site 0 - Chilled Water] Filtering outliers')
-    # df_train.loc[df_train.query('building_id == 60 and meter == 1 and meter_reading > 25000').index, 'IsFiltered'] = 1
-    # df_train.loc[df_train.query('building_id == 103 and meter == 1 and meter_reading > 5000').index, 'IsFiltered'] = 1
+
+    print('[Site 0 - Chilled Water] Filtering leading constant values')
+    site0_meter1_thresholds = {
+        50: [7, 9, 43, 60, 75, 95, 97, 98]
+    }
+
+    for threshold in site0_meter1_thresholds:
+        for building_id in site0_meter1_thresholds[threshold]:
+            filtered_idx = filter2(df_train, building_id, 1, threshold)
+            df_train.loc[filtered_idx, 'IsFiltered'] = 1
+
+    print('[Site 0 - Chilled Water] Filtering outliers')
+    df_train.loc[df_train.query('building_id == 60 and meter == 1 and meter_reading > 25000').index, 'IsFiltered'] = 1
+    df_train.loc[df_train.query('building_id == 103 and meter == 1 and meter_reading > 5000').index, 'IsFiltered'] = 1
 
     df_train.drop(df_train.query('IsFiltered == 1').index, inplace=True)
     df_train.drop(columns=['IsFiltered'], inplace=True)

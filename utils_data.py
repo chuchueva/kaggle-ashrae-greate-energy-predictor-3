@@ -105,7 +105,8 @@ def get_seasonality_model(df, model=None):
 
     sins = [1]
     for w in sins:
-        df.loc[:, 'sin_' + str(w)] = np.square(np.sin(df.index.dayofyear.astype('float64') / 365 * w * math.pi).values)
+        col_name = 'sin_' + str(w)
+        df[col_name] = np.square(np.sin(df.index.dayofyear.astype('float64') / 365 * w * math.pi).values)
 
     y_pred = np.zeros(len(df))
     x_train = df[settings['col_name_x']]
