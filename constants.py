@@ -9,4 +9,17 @@ SOURCE_FOLDER = 'Source/'
 MODEL_FOLDER = 'Models/'
 SPLIT_FOLDER = 'Splited/'
 
-FAVOURITE_NUMBER = 13
+FAVOURITE_NUMBER = 145
+
+BUILDING_FILE = 'building_metadata.csv'
+WEATHER_FILE_TEMPLATE = 'weather_cleaned_site_%d.feather'
+TRAIN_FILE_TEMPLATE = 'train_site_%d_meter_%d.feather'
+TEST_FILE_TEMPLATE = 'test_site_%d_meter_%d.feather'
+FILTER_FILE = 'ASHRAE-clean-settings.csv'
+
+MODEL_NAME_TEMPLATE = '%s_site_%s_meter_%s_building_%s_cv_%s'
+
+MODEL_TYPE_REGRESS = 'regress'
+MODEL_TYPE_PROPHET = 'prophet'
+
+REGRESS_CV_EDGE = 0.5
