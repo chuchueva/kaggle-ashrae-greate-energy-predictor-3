@@ -33,7 +33,7 @@ def get_trees_settings(site_id):
         'xgb_params': {
             'max_depth': 70,
             'learning_rate': 0.05,
-            'n_estimators': 100
+            'n_estimators': 50
         },
 
         'cat_params': {
@@ -47,9 +47,10 @@ def get_trees_settings(site_id):
 
         'network_params': {
             'horison': 1,
-            'network_epochs': 200,
+            'neuron_number': 24,
+            'epochs': 30,
             'batch_size': 1000,
-            'learning_rate_setting': 0.00002
+            'learning_rate': 0.00002
         }
     }
 

@@ -1,3 +1,4 @@
+import os as os
 import gc as gc
 import time as time
 import random as random
@@ -5,6 +6,7 @@ import numpy as np
 import pandas as pd
 import utils_data as ud
 import utils_settings as us
+import utils_model as um
 import lightgbm as lgb
 import pickle as pickle
 import constants as c
@@ -26,13 +28,16 @@ start_time = time.time()
 random.seed(c.FAVOURITE_NUMBER)
 
 result_to_update_file = 'late_model_01.csv'
-result_new_file = 'late_model_05.csv'
+result_new_file = 'late_model_06.csv'
+model_folder = 'model_06'
 
-model_files = ['model_regress.pickle', 'model_trees.pickle']
+model_files = os.listdir(c.MODEL_FOLDER + model_folder)
+# model_files = ['model_regress.pickle', 'model_trees.pickle']
+
 model_list = []
 
 for f in model_files:
-    model_load = open(c.MODEL_FOLDER + f, 'rb')
+    model_load = open(c.MODEL_FOLDER + model_folder + '/' + f, 'rb')
     model_list.append(pickle.load(model_load))
     print('Model settings are uploaded from ' + c.MODEL_FOLDER + f)
 
@@ -56,7 +61,10 @@ df_weather, df_predict, df_building = ud.read_train_data(site_id_list, meter_lis
 df_predict = ud.prepare_data(df_predict, df_building, df_weather)
 df_predict, categorical_features = ud.feature_engineering(df_predict)
 
-print('Data is ready')
+print('****************************************************************************')
+print('Data is ready, time %.0f sec' % (time.time() - start_time))
+
+blend_list = []
 
 for model in model_list:
 
@@ -65,16 +73,15 @@ for model in model_list:
 
     '''
         
-        Predict with trees
+        Predict by bunches
         
     '''
 
-    if model['type'] == 'tree':
+    if model['model_type'] in ['lgboost', 'xgboost', 'ctboost']:
 
         features_list = df_predict.columns[np.invert(df_predict.columns.isin(['row_id']))]
 
         for site_id in site_id_list:
-
             for meter in meter_list:
 
                 mask = (df_predict['site_id'].isin(site_id)) & (df_predict['meter'].isin(meter))
@@ -88,42 +95,42 @@ for model in model_list:
                     for fold in range(us.get_trees_settings('cv')):
 
                         # LGBoost
-                        model_name = ud.get_name('lgb', site=site_id, meter=meter, cv=str(fold))
-                        y_pred = model[model_name].predict(X_predict, num_iteration=model[model_name].best_iteration)
-                        df_predict.loc[mask, 'lgb_model_%d' % fold] = y_pred
-                        print('LGBoost for fold %d is done' % fold)
+                        if model['model_type'] == 'lgboost':
+                            model_name = ud.get_name(model['model_type'], site=site_id, meter=meter, cv=str(fold))
+                            y_pred = model[model_name].predict(X_predict, num_iteration=model[model_name].best_iteration)
 
                         # XGBoost
-                        model_name = ud.get_name('xgb', site=site_id, meter=meter, cv=str(fold))
-                        y_pred = model[model_name].predict(X_predict, ntree_limit=model[model_name].best_ntree_limit)
-                        df_predict.loc[mask, 'xgb_model_%d' % fold] = y_pred
-                        print('XGBoost for fold %d is done' % fold)
+                        if model['model_type'] == 'xgboost':
+                            model_name = ud.get_name(model['model_type'], site=site_id, meter=meter, cv=str(fold))
+                            y_pred = model[model_name].predict(X_predict, ntree_limit=model[model_name].best_ntree_limit)
 
                         # CatBoost
-                        model_name = ud.get_name('cat', site=site_id, meter=meter, cv=str(fold))
-                        categorical_features_indices = np.where(X_predict.dtypes != np.float)[0]
-                        y_pred = model[model_name].predict(X_predict)
-                        df_predict.loc[mask, 'cat_model_%d' % fold] = y_pred
-                        print('CatBoost for fold %d is done' % fold)
+                        if model['model_type'] == 'ctboost':
+                            model_name = ud.get_name(model['model_type'], site=site_id, meter=meter, cv=str(fold))
+                            categorical_features_indices = np.where(X_predict.dtypes != np.float)[0]
+                            y_pred = model[model_name].predict(X_predict)
+
+                        df_predict.loc[mask, '%s_%d' % (model['model_type'], fold)] = y_pred
+                        print('%s for fold %d is done, time %.0f sec' %
+                              (model['model_type'], fold, time.time() - start_time))
+
+                        blend_list.append('%s_%d' % (model['model_type'], fold))
 
                     del X_predict
                     gc.collect()
 
     '''
-
-        Predict with regress & prophet
-
+    
+        Predict by buildings regress & prophet
+    
     '''
 
-    if model['type'] == 'seasonality':
+    if model['model_type'] in ['regress', 'prophet']:
 
         settings = us.get_regress_settings()
-        building_regress = model['building_list'][c.MODEL_TYPE_REGRESS]
-        building_prophet = model['building_list'][c.MODEL_TYPE_PROPHET]
-        df_predict[c.MODEL_TYPE_REGRESS] = np.nan
-        df_predict[c.MODEL_TYPE_PROPHET] = np.nan
+        df_predict[model['model_type']] = np.nan
 
-        for single_building in building_regress:
+        for single_building in model['building_list']:
 
             meter = single_building[0]
             building = single_building[1]
@@ -132,39 +139,30 @@ for model in model_list:
             df_sample_building = df_predict[mask]
 
             if len(df_sample_building) > 0:
-                name = ud.get_name(c.MODEL_TYPE_REGRESS, meter=meter, building=building)
-                _, _, pred_r, _ = ud.get_seasonality_model(df_sample_building, settings,
-                                                           regress_model=model[name],
-                                                           prophet_model=False)
-                df_predict.loc[mask, c.MODEL_TYPE_REGRESS] = pred_r
+                name = ud.get_name(model['model_type'], meter=meter, building=building)
+                if model['model_type'] == 'regress':
+                    _, pred = um.get_regress(df_sample_building, settings, model=model[name])
+                elif model['model_type'] == 'prophet':
+                    _, pred = um.get_prophet(df_sample_building, settings, model=model[name])
+                df_predict.loc[mask, model['model_type']] = pred
 
-        for single_building in building_prophet:
+            print('%s model is done for building %d, time %.0f sec' %
+                  (model['model_type'], building, time.time() - start_time))
 
-            meter = single_building[0]
-            building = single_building[1]
+    print('****************************************************************************')
+    print('%s model is done, time %.0f sec' % (model['model_type'], time.time() - start_time))
 
-            mask = (df_predict['meter'] == meter) & (df_predict['building_id'] == building)
-            df_sample_building = df_predict[mask]
+if 'regress' in df_predict:
+    blend_list.append('regress')
 
-            if len(df_sample_building) > 0:
-                name = ud.get_name(c.MODEL_TYPE_PROPHET, meter=meter, building=building)
-                _, _, _, pred_p = ud.get_seasonality_model(df_sample_building, settings,
-                                                           regress_model=False,
-                                                           prophet_model=model[name])
-                df_predict.loc[mask, c.MODEL_TYPE_PROPHET] = pred_p
-
-        print('Regress and prophet models are done!')
+if 'prophet' in df_predict:
+    blend_list.append('prophet')
 
 '''
 
     Blending & writing output file
 
 '''
-
-blend_list = np.unique([['lgb_model_' + str(f) for f in range(us.get_trees_settings('cv'))],
-                        ['xgb_model_' + str(f) for f in range(us.get_trees_settings('cv'))],
-                        ['cat_model_' + str(f) for f in range(us.get_trees_settings('cv'))],
-                        ['regress', 'prophet']])
 
 output_array = ud.blend(df_predict, blend_list)
 print('Blending is done!')
