@@ -15,7 +15,7 @@ from sklearn.preprocessing import LabelEncoder
 from math import sqrt
 
 
-def read_train_data(site_id_list, meter_type_list, train_flag=False, folder=c.SPLIT_FOLDER):
+def read_consumption_data(site_id_list, meter_type_list, train_flag=False, folder=c.SPLIT_FOLDER):
 
     df_tr_total = list()
     df_w = list()
@@ -318,8 +318,12 @@ def blend(df_p, b_list):
 
     x = np.nanmean(df_p[b_list], axis=1)
     x = np.expm1(x)
+    if any(np.isnan(x)):
+        print('ERROR: nan is in output array')
+        return x
     y = df_p['row_id']
     xy = np.column_stack((y, x))
+    print('Blending is done!')
 
     return xy
 

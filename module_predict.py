@@ -27,9 +27,9 @@ start_time = time.time()
 
 random.seed(c.FAVOURITE_NUMBER)
 
-result_to_update_file = 'late_model_01.csv'
-result_new_file = 'late_model_06.csv'
-model_folder = 'model_06'
+result_to_update_file = 'late_model_07.csv'
+result_new_file = 'late_model_08.csv'
+model_folder = 'model_08'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
 # model_files = ['model_regress.pickle', 'model_trees.pickle']
@@ -57,7 +57,7 @@ for model in model_list:
 meter_list = ud.flat_list(meter_list)
 site_id_list = ud.flat_list(site_id_list)
 
-df_weather, df_predict, df_building = ud.read_train_data(site_id_list, meter_list, train_flag=False)
+df_weather, df_predict, df_building = ud.read_consumption_data(site_id_list, meter_list, train_flag=False)
 df_predict = ud.prepare_data(df_predict, df_building, df_weather)
 df_predict, categorical_features = ud.feature_engineering(df_predict)
 
@@ -84,7 +84,7 @@ for model in model_list:
         for site_id in site_id_list:
             for meter in meter_list:
 
-                mask = (df_predict['site_id'].isin(site_id)) & (df_predict['meter'].isin(meter))
+                mask = (df_predict['site_id'].isin([site_id])) & (df_predict['meter'].isin([meter]))
 
                 if any(mask):
 
@@ -93,6 +93,8 @@ for model in model_list:
                     X_predict = df_predict.loc[mask, features_list].reset_index(drop=True)
 
                     for fold in range(us.get_trees_settings('cv')):
+
+                        col_name = '%s_%d' % (model['model_type'], fold)
 
                         # LGBoost
                         if model['model_type'] == 'lgboost':
@@ -110,11 +112,13 @@ for model in model_list:
                             categorical_features_indices = np.where(X_predict.dtypes != np.float)[0]
                             y_pred = model[model_name].predict(X_predict)
 
-                        df_predict.loc[mask, '%s_%d' % (model['model_type'], fold)] = y_pred
+                        df_predict.loc[mask, col_name] = y_pred
+
+                        if col_name not in blend_list:
+                            blend_list.append(col_name)
+
                         print('%s for fold %d is done, time %.0f sec' %
                               (model['model_type'], fold, time.time() - start_time))
-
-                        blend_list.append('%s_%d' % (model['model_type'], fold))
 
                     del X_predict
                     gc.collect()
@@ -165,11 +169,11 @@ if 'prophet' in df_predict:
 '''
 
 output_array = ud.blend(df_predict, blend_list)
-print('Blending is done!')
 
-df_output = pd.read_csv(result_to_update_file)
-df_output.index = df_output['row_id'].values
-df_output.drop(columns=['row_id'], inplace=True)
-df_output.loc[output_array[:, 0], 'meter_reading'] = output_array[:, 1]
-df_output.to_csv(result_new_file, index=True, index_label='row_id', float_format='%.2f')
-print('File is written, time %.0f sec' % (time.time() - start_time))
+if output_array.shape[1] == 2:
+    df_output = pd.read_csv(result_to_update_file)
+    df_output.index = df_output['row_id'].values
+    df_output.drop(columns=['row_id'], inplace=True)
+    df_output.loc[output_array[:, 0], 'meter_reading'] = output_array[:, 1]
+    df_output.to_csv(result_new_file, index=True, index_label='row_id', float_format='%.2f')
+    print('File is written, time %.0f sec' % (time.time() - start_time))

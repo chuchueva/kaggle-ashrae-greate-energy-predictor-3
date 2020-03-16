@@ -23,80 +23,77 @@ Main
 
 '''
 
-site_id_list = [[2]]
+site_id_list = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15]]
 meter_list = [[0], [1], [2], [3]]
-model_type = 'prophet'          # prophet, regress
-
-meter_list_uni = ud.flat_list(meter_list)
-site_id_list_uni = ud.flat_list(site_id_list)
-
-df_weather, df_train, df_building = ud.read_train_data(site_id_list_uni, meter_list_uni,
-                                                       train_flag=True, folder=c.CLEAN_FOLDER)
-df_train = ud.prepare_data(df_train, df_building, df_weather, make_log=True)
+model_type = 'regress'          # prophet, regress
 
 settings = us.get_regress_settings()
-building_list = np.unique(df_train['building_id'])
-df_train[model_type] = np.nan
-models = dict()
 rmsle_total = list()
-building_regress = list()
 
-for meter in meter_list:
+for site_id in site_id_list:
 
-    for building in building_list:
+    meter_list_uni = ud.flat_list(meter_list)
+    site_id_list_uni = ud.flat_list(site_id)
+    df_weather, df_train, df_building = ud.read_consumption_data(site_id_list_uni, meter_list_uni,
+                                                                 train_flag=True, folder=c.CLEAN_FOLDER)
+    df_train = ud.prepare_data(df_train, df_building, df_weather, make_log=True)
 
-        df_sample_building = df_train.query('meter == @meter and building_id == @building')
-        mask = (df_train['meter'] == meter[0]) & (df_train['building_id'] == building)
+    building_list = np.unique(df_train['building_id'])
+    df_train[model_type] = np.nan
+    models = dict()
+    building_regress = list()
 
-        if len(df_sample_building) > 0:
+    for meter in meter_list:
 
-            if model_type == 'regress':
-                model, pred = um.get_regress(df_sample_building, settings)
-            if model_type == 'prophet':
-                model, pred = um.get_prophet(df_sample_building, settings)
+        for building in building_list:
 
-            rmsle = ud.get_error(df_sample_building['meter_reading'].values, pred)
-            rmsle_total.append(np.column_stack((meter[0], building, rmsle)))
+            df_sample_building = df_train.query('meter == @meter and building_id == @building')
+            mask = (df_train['meter'] == meter[0]) & (df_train['building_id'] == building)
 
-            if rmsle < c.REGRESS_PROPHET_CV_EDGE:
-                name = ud.get_name(model_type, meter=meter[0], building=building)
-                models[name] = model
-                df_train.loc[mask, model_type] = pred
-                building_regress.append([meter[0], building])
+            if len(df_sample_building) > 0:
 
-            # Plot
-            # plt.plot(df_sample_building.index, df_sample_building['meter_reading'].values, '*', label='actuals')
-            # plt.plot(df_sample_building.index, pred, label=model_type)
-            # plt.title('Modelling for %d, meter %d, rmse %s %.2f'
-            #           % (building, meter[0], model_type, rmsle), fontsize=12)
-            # plt.show()
+                if model_type == 'regress':
+                    model, pred = um.get_regress(df_sample_building, settings)
+                if model_type == 'prophet':
+                    model, pred = um.get_prophet(df_sample_building, settings)
 
-            print('Model for building %d meter %d is done, rmsle %.2f, time %.0f sec' %
-                  (building, meter[0], rmsle, time.time() - start_time))
+                rmsle = ud.get_error(df_sample_building['meter_reading'].values, pred)
+                if rmsle < c.REGRESS_PROPHET_CV_EDGE:
+                    name = ud.get_name(model_type, meter=meter[0], building=building)
+                    models[name] = model
+                    df_train.loc[mask, model_type] = pred
+                    building_regress.append([meter[0], building])
+                    rmsle_total.append(np.column_stack((site_id[0], meter[0], building, rmsle)))
 
-        else:
+                # Plot
+                # plt.plot(df_sample_building.index, df_sample_building['meter_reading'].values, '*', label='actuals')
+                # plt.plot(df_sample_building.index, pred, label=model_type)
+                # plt.title('Modelling for %d, meter %d, rmse %s %.2f'
+                #           % (building, meter[0], model_type, rmsle), fontsize=12)
+                # plt.show()
 
-            print('No meter %d data for building %s' % (meter[0], str(building)))
+                print('Model for building %d meter %d is done, rmsle %.2f, time %.0f sec' %
+                      (building, meter[0], rmsle, time.time() - start_time))
 
-# Save model
+            else:
 
-models['site_id_list'] = site_id_list
-models['meter_list'] = meter_list
-models['building_list'] = np.array(building_regress)
-models['model_type'] = model_type
+                print('No meter %d data for building %s' % (meter[0], str(building)))
 
-model_file = ud.get_name(model_type, site_id_list, meter_list) + '.pickle'
-filename = c.MODEL_FOLDER + model_file
-model_save = open(filename, 'wb')
-pickle.dump(models, model_save)
-model_save.close()
-print('%s models are saved in %s' %(model_type, filename))
+    # Save model
+    meter_list_update = np.unique(df_train['meter'].values)
 
-df_rmse_total = pd.DataFrame(np.concatenate(rmsle_total), columns=['meter', 'building', model_type])
-df_rmse_total.to_csv('%s_rmsle.csv' % model_file[:-7])
+    models['site_id_list'] = site_id
+    models['meter_list'] = list(meter_list_update)
+    models['building_list'] = np.array(building_regress)
+    models['model_type'] = model_type
 
-mask = np.invert(np.isnan(df_train[model_type]))
+    model_file = ud.get_name(model_type, site_id, meter_list_update) + '.pickle'
+    filename = c.MODEL_FOLDER + model_file
+    model_save = open(filename, 'wb')
+    pickle.dump(models, model_save)
+    model_save.close()
+    print('%s models are saved in %s' % (model_type, filename))
 
-if any(mask):
-    print('RMSLE regress: %.2f' % ud.get_error(df_train.loc[mask, 'meter_reading'].values,
-                                               df_train.loc[mask, model_type].values))
+df_rmse_total = pd.DataFrame(np.concatenate(rmsle_total), columns=['site_id', 'meter', 'building', model_type])
+df_rmse_sites = df_rmse_total.groupby(['site_id']).mean()
+print(df_rmse_sites)
