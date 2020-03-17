@@ -27,9 +27,9 @@ start_time = time.time()
 
 random.seed(c.FAVOURITE_NUMBER)
 
-result_to_update_file = 'late_model_07.csv'
-result_new_file = 'late_model_08.csv'
-model_folder = 'model_08'
+result_to_update_file = 'late_model_01.csv'
+result_new_file = 'late_model_09.csv'
+model_folder = 'model_09'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
 # model_files = ['model_regress.pickle', 'model_trees.pickle']

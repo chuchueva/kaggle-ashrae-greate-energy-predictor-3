@@ -5,10 +5,11 @@ PRIMARY_USE_MAP = {'Education': 1, 'Office': 2, 'Entertainment/public assembly':
                    'Food sales and service': 10, 'Retail': 11, 'Warehouse/storage': 12, 'Services': 13,
                    'Technology/science': 14, 'Utility': 15, 'Religious worship': 16}
 
-CLEAN_FOLDER = 'Cleaned/'
-SOURCE_FOLDER = 'Source/'
-MODEL_FOLDER = 'Models/'
-SPLIT_FOLDER = 'Splited/'
+storage = 'E:/PythonStorage/04_ashrae_building_modelling/'
+CLEAN_FOLDER = storage + 'Cleaned/'
+SOURCE_FOLDER = storage + 'Source/'
+MODEL_FOLDER = storage + 'Models/'
+SPLIT_FOLDER = storage + 'Splited/'
 
 FAVOURITE_NUMBER = 145
 

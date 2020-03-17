@@ -35,7 +35,7 @@ for site_id in site_id_list:
     meter_list_uni = ud.flat_list(meter_list)
     site_id_list_uni = ud.flat_list(site_id)
     df_weather, df_train, df_building = ud.read_consumption_data(site_id_list_uni, meter_list_uni,
-                                                                 train_flag=True, folder=c.CLEAN_FOLDER)
+                                                                 train_flag=True, folder=c.SPLIT_FOLDER)
     df_train = ud.prepare_data(df_train, df_building, df_weather, make_log=True)
 
     building_list = np.unique(df_train['building_id'])
