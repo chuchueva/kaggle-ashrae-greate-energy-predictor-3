@@ -36,3 +36,22 @@ BUILDING_METADATA_DTYPES = {'site_id': np.uint8, 'building_id': np.uint16, 'squa
                             'year_built': np.float32, 'floor_count': np.float32, 'building_eui': np.float32}
 TRAIN_DTYPES = {'building_id': np.uint16, 'meter': np.uint8, 'meter_reading': np.float32}
 TEST_DTYPES = {'row_id': np.uint32, 'building_id': np.uint16, 'meter': np.uint8}
+
+SITE_METER = {
+    0: [0, 1],
+    1: [0, 3],
+    2: [0, 1, 3],
+    3: [0],
+    4: [0],
+    5: [0],
+    6: [0, 1, 2],
+    7: [0, 1, 2, 3],
+    8: [0],
+    9: [0, 1, 2],
+    10: [0, 1, 3],
+    11: [0, 1, 3],
+    12: [0],
+    13: [0, 1, 2],
+    14: [0, 1, 2, 3],
+    15: [0, 1, 2, 3]
+}

@@ -28,8 +28,8 @@ start_time = time.time()
 random.seed(c.FAVOURITE_NUMBER)
 
 result_to_update_file = 'late_model_01.csv'
-result_new_file = 'late_model_09.csv'
-model_folder = 'model_09'
+result_new_file = 'late_model_12.csv'
+model_folder = 'model_12'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
 # model_files = ['model_regress.pickle', 'model_trees.pickle']
@@ -68,8 +68,8 @@ blend_list = []
 
 for model in model_list:
 
-    site_id_list = model['site_id_list']
-    meter_list = model['meter_list']
+    site_id_list = [model['site_id_list']]
+    meter_list = [model['meter_list']]
 
     '''
         
@@ -84,7 +84,7 @@ for model in model_list:
         for site_id in site_id_list:
             for meter in meter_list:
 
-                mask = (df_predict['site_id'].isin([site_id])) & (df_predict['meter'].isin([meter]))
+                mask = (df_predict['site_id'].isin(site_id)) & (df_predict['meter'].isin(meter))
 
                 if any(mask):
 
@@ -153,8 +153,9 @@ for model in model_list:
             print('%s model is done for building %d, time %.0f sec' %
                   (model['model_type'], building, time.time() - start_time))
 
+    t = ud.get_name('Forecast is done for ', site=site_id, meter=meter)
+    print('%s: type %s, time %.0f sec' % (t, model['model_type'], time.time() - start_time))
     print('****************************************************************************')
-    print('%s model is done, time %.0f sec' % (model['model_type'], time.time() - start_time))
 
 if 'regress' in df_predict:
     blend_list.append('regress')

@@ -37,8 +37,8 @@ Read data
 # meter_list = [[0, 1, 2, 3]]
 
 site_id_list = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15]]
-meter_list = [[0], [1], [2], [3]]
-model_type_list = ['xgboost', 'lgboost', 'ctboost']
+meter_list = [[0, 1, 2, 3]]
+model_type_list = ['lgboost']           # 'xgboost', 'lgboost', 'ctboost'
 target_name = 'meter_reading'
 
 for model_type in model_type_list:
@@ -56,7 +56,14 @@ for model_type in model_type_list:
 
         models = dict()
 
+        meter_list_by_site = []
+        for id in site_id:
+            meter_list_by_site.append(c.SITE_METER.get(id))
+        meter_list_by_site = np.unique(meter_list_by_site)
+
         for meter in meter_list:
+
+            meter = list(np.array(meter)[np.isin(meter, meter_list_by_site)])
 
             features_list = df_train.columns[np.invert(df_train.columns.isin([target_name]))]
             kf = KFold(n_splits=us.get_trees_settings('cv'), random_state=c.FAVOURITE_NUMBER, shuffle=True)
@@ -194,13 +201,12 @@ for model_type in model_type_list:
         print('****************************************************************************')
 
         rmsle_total.append([site_id[0], rmsle])
-        meter_list_update = np.unique(df_train['meter'].values)
 
         models['site_id_list'] = site_id
-        models['meter_list'] = list(meter_list_update)
+        models['meter_list'] = meter
         models['model_type'] = model_type
 
-        model_file = ud.get_name(model_type, site_id, meter_list_update) + '.pickle'
+        model_file = ud.get_name(model_type, site_id, meter) + '.pickle'
         filename = c.MODEL_FOLDER + model_file
         model_save = open(filename, 'wb')
         pickle.dump(models, model_save)

@@ -24,22 +24,22 @@ def get_trees_settings(site_id):
 
         'lgb_params': {
             'objective': 'regression',
-            'num_leaves': 70,
+            'num_leaves': 20,
             'learning_rate': 0.01,
-            'num_boost_round': 1300,
+            'num_boost_round': 400,
             'metric': 'rmse'
         },
 
         'xgb_params': {
-            'max_depth': 70,
+            'max_depth': 35,
             'learning_rate': 0.05,
-            'n_estimators': 50
+            'n_estimators': 35
         },
 
         'cat_params': {
             'depth': 10,
             'learning_rate': 1,
-            'iterations': 100,
+            'iterations': 15,
             'eval_metric': 'RMSE',
             'random_seed': c.FAVOURITE_NUMBER,
             'verbose': True
