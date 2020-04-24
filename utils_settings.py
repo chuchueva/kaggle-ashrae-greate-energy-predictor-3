@@ -24,7 +24,7 @@ def get_trees_settings(site_id):
 
         'lgb_params': {
             'objective': 'regression',
-            'num_leaves': 20,
+            'num_leaves': 10,
             'learning_rate': 0.01,
             'num_boost_round': 400,
             'metric': 'rmse'
