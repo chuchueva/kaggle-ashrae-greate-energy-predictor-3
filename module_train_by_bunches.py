@@ -50,7 +50,7 @@ for model_type in model_type_list:
         meter_list_uni = ud.flat_list(meter_list)
         site_id_list_uni = ud.flat_list(site_id)
         df_weather, df_train, df_building = ud.read_consumption_data(site_id_list_uni, meter_list_uni,
-                                                                     train_flag=True, folder=c.SPLIT_FOLDER)
+                                                                     train_flag=True, folder=c.CLEAN_FOLDER)
         df_train = ud.prepare_data(df_train, df_building, df_weather)
         df_train, categorical_features = ud.feature_engineering(df_train)
 
