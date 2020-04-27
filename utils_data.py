@@ -15,43 +15,50 @@ from sklearn.preprocessing import LabelEncoder
 from math import sqrt
 
 
-def read_consumption_data(site_id_list, meter_type_list, train_flag=False, folder=c.SPLIT_FOLDER):
+def read_consumption_data(site_id_list, meter_type_list, data_type='train'):
 
-    df_tr_total = list()
+    df_total = list()
+
+    for site_id in site_id_list:
+
+        for meter_type in meter_type_list:
+
+            if data_type == 'train':
+                data_file = c.TRAIN_FILE_TEMPLATE % (site_id, meter_type)
+            else:
+                data_file = c.TEST_FILE_TEMPLATE % (site_id, meter_type)
+
+            try:
+                df_raw = pd.read_feather(c.CLEAN_FOLDER + data_file)
+                df_total.append(df_raw)
+                print('File %s is read' % (c.CLEAN_FOLDER + data_file))
+            except:
+                print('File %s does not exist' % (c.CLEAN_FOLDER + data_file))
+
+    df_total_out = pd.concat(df_total)
+
+    return df_total_out
+
+
+def read_weather_data(site_id_list):
+
     df_w = list()
-
-    df_building_out = pd.read_csv(c.SOURCE_FOLDER + c.BUILDING_FILE)
 
     for site_id in site_id_list:
 
         weather_data = c.WEATHER_FILE_TEMPLATE % site_id
         df_w.append(pd.read_feather(c.CLEAN_FOLDER + weather_data))
 
-        for meter_type in meter_type_list:
-
-            if train_flag:
-                data_file = c.TRAIN_FILE_TEMPLATE % (site_id, meter_type)
-            else:
-                data_file = c.TEST_FILE_TEMPLATE % (site_id, meter_type)
-
-            try:
-                df_raw = pd.read_feather(folder + data_file)
-                if any(df_raw['building_id'] <= 104):                         # Special treatment for site_0
-                    df_raw = manual_filtering(df_raw)
-                print('File %s is read' % (folder + data_file))
-            except:
-                print('File %s does not exist' % (folder + data_file))
-                continue
-
-            if folder == c.SPLIT_FOLDER and 'meter_reading' in df_raw:
-                df_raw = manual_filtering(df_raw)
-
-            df_tr_total.append(df_raw)
-
-    df_tr_total_out = pd.concat(df_tr_total)
     df_w_out = pd.concat(df_w)
 
-    return df_w_out, df_tr_total_out, df_building_out
+    return df_w_out
+
+
+def read_building_data():
+
+    df_building_out = pd.read_csv(c.SOURCE_FOLDER + c.BUILDING_FILE)
+
+    return df_building_out
 
 
 def find_constant(target, min_length=48):
@@ -76,9 +83,9 @@ def find_constant(target, min_length=48):
     return values
 
 
-def manual_filtering(df_input):
+def filter_by_settings(df_input):
 
-    filters_data = pd.read_csv(c.FILTER_FILE)
+    filters_data = pd.read_csv(c.FILTER_SETTINGS_FILE)
 
     df_input['IsFiltered'] = 0
 
@@ -86,44 +93,44 @@ def manual_filtering(df_input):
     df_input.loc[df_input.query('building_id <= 104 and meter == 0 and timestamp < "2016-05-21 00:00:00"').index,
                  'IsFiltered'] = 1
 
-    # # Special treatment for meter_0
-    # df_input.loc[df_input.query('meter == 0 and meter_reading == 0').index,
-    #              'IsFiltered'] = 1
-    #
-    # # General treatment for the rest
-    # mask = filters_data['building_id'].isin(df_input['building_id'])
-    # building_list = filters_data.loc[mask, 'building_id']
-    # meter_list = filters_data.loc[mask, 'meter']
-    #
-    # for building_id, meter in zip(building_list, meter_list):
-    #
-    #     filter_settings = filters_data.query('meter == @meter and building_id == @building_id')
-    #
-    #     # Type 1: edges cleaning
-    #
-    #     min_edge = filter_settings['min_edge'].values[0]
-    #     max_edge = filter_settings['max_edge'].values[0]
-    #     if np.isnan(min_edge):
-    #         min_edge = -1
-    #     if np.isnan(max_edge):
-    #         max_edge = 1e+10
-    #     df_input.loc[df_input.query('building_id == @building_id and meter == @meter and '
-    #                                 '(meter_reading <= @min_edge or meter_reading >= @max_edge)').index,
-    #                  'IsFiltered'] = 1
-    #
-    #     # Type 2: consequent constants cleaning
-    #
-    #     do_const = filter_settings['do_const'].values[0]
-    #     if do_const == 1:
-    #         df_input_building = df_input.query('building_id == @building_id and meter == @meter')
-    #         values_const = find_constant(df_input_building[['timestamp', 'meter_reading']])
-    #         df_input.loc[df_input.query('building_id == @building_id and meter == @meter and '
-    #                                     'meter_reading in @values_const').index,
-    #                      'IsFiltered'] = 1
-    #
-    #     print('Building %d meter %d is filtered' % (building_id, meter))
-    #
-    # print('Filtered values num is %d' % np.sum(df_input['IsFiltered']))
+    # Special treatment for meter_0
+    df_input.loc[df_input.query('meter == 0 and meter_reading == 0').index,
+                 'IsFiltered'] = 1
+
+    # General treatment for the rest
+    mask = filters_data['building_id'].isin(df_input['building_id'])
+    building_list = filters_data.loc[mask, 'building_id']
+    meter_list = filters_data.loc[mask, 'meter']
+
+    for building_id, meter in zip(building_list, meter_list):
+
+        filter_settings = filters_data.query('meter == @meter and building_id == @building_id')
+
+        # Type 1: edges cleaning
+
+        min_edge = filter_settings['min_edge'].values[0]
+        max_edge = filter_settings['max_edge'].values[0]
+        if np.isnan(min_edge):
+            min_edge = -1
+        if np.isnan(max_edge):
+            max_edge = 1e+10
+        df_input.loc[df_input.query('building_id == @building_id and meter == @meter and '
+                                    '(meter_reading <= @min_edge or meter_reading >= @max_edge)').index,
+                     'IsFiltered'] = 1
+
+        # Type 2: consequent constants cleaning
+
+        do_const = filter_settings['do_const'].values[0]
+        if do_const == 1:
+            df_input_building = df_input.query('building_id == @building_id and meter == @meter')
+            values_const = find_constant(df_input_building[['timestamp', 'meter_reading']])
+            df_input.loc[df_input.query('building_id == @building_id and meter == @meter and '
+                                        'meter_reading in @values_const').index,
+                         'IsFiltered'] = 1
+
+        print('Building %d meter %d is filtered' % (building_id, meter))
+
+    print('Filtered values num is %d' % np.sum(df_input['IsFiltered']))
 
     df_input.drop(df_input.query('IsFiltered == 1').index, inplace=True)
     df_input.drop(columns=['IsFiltered'], inplace=True)

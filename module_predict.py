@@ -28,8 +28,8 @@ start_time = time.time()
 random.seed(c.FAVOURITE_NUMBER)
 
 result_to_update_file = 'late_model_01.csv'
-result_new_file = 'late_model_16.csv'
-model_folder = 'model_16'
+result_new_file = 'late_model_19.csv'
+model_folder = 'model_19'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
 # model_files = ['model_regress.pickle', 'model_trees.pickle']
@@ -56,8 +56,11 @@ for model in model_list:
 
 meter_list = ud.flat_list(meter_list)
 site_id_list = ud.flat_list(site_id_list)
+df_building = ud.read_building_data()
 
-df_weather, df_predict, df_building = ud.read_consumption_data(site_id_list, meter_list, train_flag=False)
+df_weather = ud.read_weather_data(site_id_list)
+df_predict = ud.read_consumption_data(site_id_list, meter_list, data_type='test')
+
 df_predict = ud.prepare_data(df_predict, df_building, df_weather)
 df_predict, categorical_features = ud.feature_engineering(df_predict)
 
