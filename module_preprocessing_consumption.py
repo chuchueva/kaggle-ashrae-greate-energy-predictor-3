@@ -15,10 +15,10 @@ start_time = time.time()
 Main
 
 '''
-site_id_list = np.arange(c.SITE_ID_RANGE)
+site_id_list = [0]
 meter_list = np.arange(c.METER_RANGE)
-data_type = 'test'              # test
-do_filter = False               # False (True only for train)
+data_type = 'train'              # test
+do_filter = True               # False (True only for train)
 
 
 building = pd.read_csv(c.SOURCE_FOLDER + c.BUILDING_FILE, dtype=c.BUILDING_METADATA_DTYPES)

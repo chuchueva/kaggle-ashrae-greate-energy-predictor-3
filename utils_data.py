@@ -63,24 +63,17 @@ def read_building_data():
 
 def find_constant(target, min_length=48):
 
-    values = list()
+    timestamp_to_remove = list()
+    t = target['meter_reading'].values
+    splitted_date = np.split(target['timestamp'].values, np.where(t[1:] != t[:-1])[0] + 1)
 
-    if any(target):
+    for i in splitted_date:
+        if len(i) > min_length:
+            timestamp_to_remove.append(i)
 
-        t = target['meter_reading'].values
-        splitted_target = np.split(t, np.where(t[1:] != t[:-1])[0] + 1)
-        splitted_date = np.split(target['timestamp'].values, np.where(t[1:] != t[:-1])[0] + 1)
+    timestamp_to_remove = np.concatenate(timestamp_to_remove)
 
-        for i, x in enumerate(splitted_date):
-            if len(x) > min_length:
-                values.append(splitted_target[i][0])
-
-        if any(values):
-            values = np.array(values)
-            values = values[values != 0]
-            print(values)
-
-    return values
+    return timestamp_to_remove.ravel()
 
 
 def filter_by_settings(df_input):
@@ -90,17 +83,14 @@ def filter_by_settings(df_input):
     df_input['IsFiltered'] = 0
 
     # Special treatment for site_0
-    df_input.loc[df_input.query('building_id <= 104 and meter == 0 and timestamp < "2016-05-21 00:00:00"').index,
-                 'IsFiltered'] = 1
-
-    # Special treatment for meter_0
-    df_input.loc[df_input.query('meter == 0 and meter_reading == 0').index,
-                 'IsFiltered'] = 1
+    df_input.loc[df_input.query('(building_id < 53 or building_id > 53) and meter == 0 and '
+                                'timestamp < "2016-05-20 18:00:00"').index, 'IsFiltered'] = 1
 
     # General treatment for the rest
-    mask = filters_data['building_id'].isin(df_input['building_id'])
-    building_list = filters_data.loc[mask, 'building_id']
-    meter_list = filters_data.loc[mask, 'meter']
+    building_list = np.unique(df_input['building_id'].values)
+    meter_list = np.unique(df_input['meter'].values)
+    building_list = filters_data.query('meter in @meter_list and building_id in @building_list')['building_id'].values
+    meter_list = filters_data.query('meter in @meter_list and building_id in @building_list')['meter'].values
 
     for building_id, meter in zip(building_list, meter_list):
 
@@ -123,10 +113,10 @@ def filter_by_settings(df_input):
         do_const = filter_settings['do_const'].values[0]
         if do_const == 1:
             df_input_building = df_input.query('building_id == @building_id and meter == @meter')
-            values_const = find_constant(df_input_building[['timestamp', 'meter_reading']])
-            df_input.loc[df_input.query('building_id == @building_id and meter == @meter and '
-                                        'meter_reading in @values_const').index,
-                         'IsFiltered'] = 1
+            dates_to_remove = find_constant(df_input_building[['timestamp', 'meter_reading']])
+            if any(dates_to_remove):
+                df_input.loc[df_input.query('building_id == @building_id and meter == @meter and '
+                                            'timestamp in @dates_to_remove').index, 'IsFiltered'] = 1
 
         print('Building %d meter %d is filtered' % (building_id, meter))
 

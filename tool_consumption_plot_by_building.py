@@ -5,7 +5,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 site_id_list = [[0]]
-meter_list = [[0], [1], [2], [3]]
+meter_list = [[1]]
 data_type = 'train'
 
 meter_list_uni = ud.flat_list(meter_list)
@@ -20,10 +20,12 @@ df_consumption = ud.read_consumption_data(site_id_list_uni, meter_list_uni, data
 for site_id in site_id_list_uni:
 
     building_list = df_building.loc[df_building['site_id'] == site_id, 'building_id'].values
+    # building_list = building_list[building_list >= 95]
+
     print('Building from %d to %d' % (min(building_list), max(building_list)))
 
-    for building in building_list:
-        for meter in meter_list_uni:
+    for meter in meter_list_uni:
+        for building in building_list:
 
             df_sample_building = df_consumption.query('meter == @meter and building_id == @building')
             df_sample_building_clean = ud.filter_by_settings(df_sample_building.copy())

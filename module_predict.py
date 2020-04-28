@@ -27,9 +27,9 @@ start_time = time.time()
 
 random.seed(c.FAVOURITE_NUMBER)
 
-result_to_update_file = 'late_model_01.csv'
-result_new_file = 'late_model_19.csv'
-model_folder = 'model_19'
+result_to_update_file = 'late_model_16.csv'
+result_new_file = 'late_model_27.csv'
+model_folder = 'model_21'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
 # model_files = ['model_regress.pickle', 'model_trees.pickle']
@@ -174,6 +174,7 @@ if 'prophet' in df_predict:
 
 print('Blend_list: %s' % blend_list)
 output_array = ud.blend(df_predict, blend_list)
+# output_array[:, 1] = output_array[:, 1] * 0.5
 
 if output_array.shape[1] == 2:
     df_output = pd.read_csv(result_to_update_file)

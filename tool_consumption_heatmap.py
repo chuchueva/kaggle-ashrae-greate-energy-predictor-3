@@ -19,8 +19,9 @@ Main
 
 '''
 
+site_id_list = [0]
+
 # Read data
-site_id_list = [0, 1]
 meter_list = []
 for site_id in site_id_list:
     meter_list.append(c.SITE_METER.get(site_id))
@@ -44,6 +45,7 @@ def get_empty_map(x, y):
 time_range = pd.date_range(datetime(2016, 1, 1, 0, 0), datetime(2016, 12, 31, 23, 0), freq='H')
 f, a = plt.subplots(1, len(meter_list), figsize=(20, 30))
 
+map_df_collection = dict()
 for meter, i in zip(meter_list, range(len(meter_list))):
 
     map_df = get_empty_map(len(building_list), time_range)
@@ -52,11 +54,12 @@ for meter, i in zip(meter_list, range(len(meter_list))):
     for b in building_list:
         v = df.query('building_id == @b')[['timestamp', 'meter_reading']].reset_index()
         if any(v):
-            # v['meter_reading'] = v['meter_reading'].apply(lambda x: 0 if x == 0 else 1)
             mask_in = time_range.isin(v['timestamp'])
             mask_out = v['timestamp'].isin(time_range)
             if any(mask_in) and any(mask_out):
                 map_df[b, mask_in] = v.loc[mask_out, 'meter_reading']
+
+    map_df_collection['meter_%d' % meter] = map_df
 
     a[i].set_title('meter %d' % meter)
     sns.heatmap(map_df, cmap='tab20', ax=a[i], cbar=False)
