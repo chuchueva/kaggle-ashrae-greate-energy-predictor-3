@@ -4,8 +4,8 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-site_id_list = [[0]]
-meter_list = [[1]]
+site_id_list = [[7]]
+meter_list = [[2]]
 data_type = 'train'
 
 meter_list_uni = ud.flat_list(meter_list)
@@ -20,7 +20,7 @@ df_consumption = ud.read_consumption_data(site_id_list_uni, meter_list_uni, data
 for site_id in site_id_list_uni:
 
     building_list = df_building.loc[df_building['site_id'] == site_id, 'building_id'].values
-    # building_list = building_list[building_list >= 95]
+    building_list = building_list[building_list >= 769]
 
     print('Building from %d to %d' % (min(building_list), max(building_list)))
 
@@ -37,7 +37,7 @@ for site_id in site_id_list_uni:
                 plt.plot(df_sample_building_clean['timestamp'], df_sample_building_clean['meter_reading'].values, '.',
                          label='actuals cleaned')
                 plt.title('Consumption for site %d, meter %d, building %d' % (site_id, meter, building), fontsize=12)
-                plt.legend()
+                # plt.legend()
                 plt.show()
 
 print('Done!')

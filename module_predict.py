@@ -28,7 +28,7 @@ start_time = time.time()
 random.seed(c.FAVOURITE_NUMBER)
 
 result_to_update_file = 'late_model_16.csv'
-result_new_file = 'late_model_27.csv'
+result_new_file = 'late_model_28.csv'
 model_folder = 'model_21'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)

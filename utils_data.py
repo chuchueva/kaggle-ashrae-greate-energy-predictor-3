@@ -83,8 +83,12 @@ def filter_by_settings(df_input):
     df_input['IsFiltered'] = 0
 
     # Special treatment for site_0
-    df_input.loc[df_input.query('(building_id < 53 or building_id > 53) and meter == 0 and '
+    df_input.loc[df_input.query('(building_id < 53 or building_id > 53) and building_id <= 104 and meter == 0 and '
                                 'timestamp < "2016-05-20 18:00:00"').index, 'IsFiltered'] = 1
+
+    # Special treatment for site_1
+    df_input.loc[df_input.query('(building_id >= 105 and building_id <= 155) and meter == 0 and '
+                                'timestamp == "2016-01-01 00:00:00"').index, 'IsFiltered'] = 1
 
     # General treatment for the rest
     building_list = np.unique(df_input['building_id'].values)

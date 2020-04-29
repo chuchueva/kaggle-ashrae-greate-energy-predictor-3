@@ -15,7 +15,7 @@ start_time = time.time()
 Main
 
 '''
-site_id_list = [0]
+site_id_list = [5, 6, 7]
 meter_list = np.arange(c.METER_RANGE)
 data_type = 'train'              # test
 do_filter = True               # False (True only for train)
