@@ -4,7 +4,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-site_id_list = [[7]]
+site_id_list = [[15]]
 meter_list = [[2]]
 data_type = 'train'
 
@@ -20,7 +20,7 @@ df_consumption = ud.read_consumption_data(site_id_list_uni, meter_list_uni, data
 for site_id in site_id_list_uni:
 
     building_list = df_building.loc[df_building['site_id'] == site_id, 'building_id'].values
-    building_list = building_list[building_list >= 769]
+    # building_list = building_list[building_list >= 1255]
 
     print('Building from %d to %d' % (min(building_list), max(building_list)))
 

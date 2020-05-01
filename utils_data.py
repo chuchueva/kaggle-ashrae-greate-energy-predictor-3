@@ -90,6 +90,10 @@ def filter_by_settings(df_input):
     df_input.loc[df_input.query('(building_id >= 105 and building_id <= 155) and meter == 0 and '
                                 'timestamp == "2016-01-01 00:00:00"').index, 'IsFiltered'] = 1
 
+    # Special treatment for building_1167
+    df_input.loc[df_input.query('building_id == 1167 and meter == 1 and timestamp >= "2016-05-18 15:00:00" '
+                                'and timestamp <= "2016-06-25 07:00:00" ').index, 'IsFiltered'] = 1
+
     # General treatment for the rest
     building_list = np.unique(df_input['building_id'].values)
     meter_list = np.unique(df_input['meter'].values)
@@ -122,7 +126,7 @@ def filter_by_settings(df_input):
                 df_input.loc[df_input.query('building_id == @building_id and meter == @meter and '
                                             'timestamp in @dates_to_remove').index, 'IsFiltered'] = 1
 
-        print('Building %d meter %d is filtered' % (building_id, meter))
+        # print('Building %d meter %d is filtered' % (building_id, meter))
 
     print('Filtered values num is %d' % np.sum(df_input['IsFiltered']))
 
