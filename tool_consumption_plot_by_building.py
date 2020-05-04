@@ -4,27 +4,23 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-site_id_list = [[15]]
-meter_list = [[2]]
-data_type = 'train'
-
-meter_list_uni = ud.flat_list(meter_list)
-site_id_list_uni = ud.flat_list(site_id_list)
+site_id_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+meter_list = [0, 1, 2, 3]
 
 df_building = ud.read_building_data()
-df_weather = ud.read_weather_data(site_id_list_uni)
-df_consumption = ud.read_consumption_data(site_id_list_uni, meter_list_uni, data_type=data_type)
+df_weather = ud.read_weather_data(site_id_list)
+df_consumption = ud.read_consumption_data(site_id_list, meter_list, data_type='train')
 
 # Plot train consumption by meter_building for cleaning purpose
 
-for site_id in site_id_list_uni:
+for site_id in site_id_list:
 
     building_list = df_building.loc[df_building['site_id'] == site_id, 'building_id'].values
     # building_list = building_list[building_list >= 1255]
 
-    print('Building from %d to %d' % (min(building_list), max(building_list)))
+    print('Buildings from %d to %d' % (min(building_list), max(building_list)))
 
-    for meter in meter_list_uni:
+    for meter in meter_list:
         for building in building_list:
 
             df_sample_building = df_consumption.query('meter == @meter and building_id == @building')
