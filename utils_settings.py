@@ -16,7 +16,7 @@ def get_regress_settings():
     return regress_settings
 
 
-def get_trees_settings(site_id):
+def get_trees_settings(setting_type, site_id=None):
 
     settings = {
 
@@ -26,7 +26,7 @@ def get_trees_settings(site_id):
             'objective': 'regression',
             'num_leaves': 10,
             'learning_rate': 0.01,
-            'num_boost_round': 400,
+            'num_boost_round': lgboost_num_boost_round(site_id),
             'metric': 'rmse'
         },
 
@@ -54,6 +54,35 @@ def get_trees_settings(site_id):
         }
     }
 
-    ss = settings.get(str(site_id))
+    ss = settings.get(setting_type)
+
+    return ss
+
+
+def lgboost_num_boost_round(site_id):
+
+    settings = {
+        0: 180,
+        1: 210,
+        2: 720,
+        3: 75,
+        4: 90,
+        5: 120,
+        6: 1500,
+        7: 1500,
+        8: 90,
+        9: 1500,
+        10: 1500,
+        11: 240,
+        12: 60,
+        13: 1500,
+        14: 1500,
+        15: 375
+
+    }
+
+    ss = settings.get(site_id)
+    if ss is not None:
+        ss = ss
 
     return ss

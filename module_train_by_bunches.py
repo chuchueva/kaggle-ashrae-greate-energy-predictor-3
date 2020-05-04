@@ -101,10 +101,10 @@ for model_type in model_type_list:
                         d_train = lgb.Dataset(X_train, label=y_train, categorical_feature=categorical_features)
                         d_valid = lgb.Dataset(X_valid, label=y_valid, categorical_feature=categorical_features)
                         watchlist = [d_train, d_valid]
-                        model_lgb = lgb.train(us.get_trees_settings('lgb_params'),
+                        model_lgb = lgb.train(us.get_trees_settings('lgb_params', site_id=site_id[0]),
                                               train_set=d_train,
                                               valid_sets=watchlist,
-                                              verbose_eval=100)
+                                              verbose_eval=30)
                         name = ud.get_name(model_type, site=site_id, meter=meter, cv=str(fold))
                         models[name] = model_lgb
                         y_pred_valid = model_lgb.predict(X_valid, num_iteration=model_lgb.best_iteration)
