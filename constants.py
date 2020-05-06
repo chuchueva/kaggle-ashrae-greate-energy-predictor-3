@@ -11,7 +11,7 @@ TRAIN_FILE = 'train.csv'
 WEATHER_TRAIN_FILE = 'weather_train.csv'
 WEATHER_TEST_FILE = 'weather_test.csv'
 BUILDING_FILE = 'building_metadata.csv'
-FILTER_SETTINGS_FILE = 'clean-settings-17.csv'
+FILTER_SETTINGS_FILE = 'clean-settings-optimal.csv'
 
 FAVOURITE_NUMBER = 145
 
@@ -23,7 +23,7 @@ MODEL_NAME_TEMPLATE = '%s_site_%s_meter_%s_building_%s_cv_%s'
 REGRESS_PROPHET_CV_EDGE = 0.5
 SITE_ID_RANGE = 16
 METER_RANGE = 4
-BUILDING_NUM = 1449
+BUILDING_RANGE = 1450
 
 BUILDING_METADATA_DTYPES = {'site_id': np.uint8, 'building_id': np.uint16, 'square_feet': np.float32,
                             'year_built': np.float32, 'floor_count': np.float32, 'building_eui': np.float32}

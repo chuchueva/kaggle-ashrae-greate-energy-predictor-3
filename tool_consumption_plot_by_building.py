@@ -1,5 +1,6 @@
 import utils_data as ud
 import pandas as pd
+import numpy as np
 import constants as c
 import matplotlib.pyplot as plt
 import warnings
@@ -22,7 +23,7 @@ df_consumption = ud.read_consumption_data(site_id_list, meter_list, data_type='t
 # for site_id in site_id_list:
 #
 #     building_list = df_building.loc[df_building['site_id'] == site_id, 'building_id'].values
-#     # building_list = building_list[building_list >= 7]
+#     building_list = building_list[building_list >= 1087]
 #
 #     print('Buildings from %d to %d' % (min(building_list), max(building_list)))
 #
@@ -54,6 +55,11 @@ filters_data = pd.read_csv(c.FILTER_SETTINGS_FILE)
 building_list = filters_data['building_id']
 meter_list = filters_data['meter']
 site_id_list = filters_data['site_id']
+
+mask = building_list > 1000
+building_list = filters_data.loc[mask, 'building_id']
+meter_list = filters_data.loc[mask, 'meter']
+site_id_list = filters_data.loc[mask, 'site_id']
 
 for site_id, building, meter in zip(site_id_list, building_list, meter_list):
 

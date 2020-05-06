@@ -67,7 +67,8 @@ for model_type in model_type_list:
 
             meter = list(np.array(meter)[np.isin(meter, meter_list_by_site)])
 
-            features_list = df_train.columns[np.invert(df_train.columns.isin([target_name]))]
+            features_list = df_train.columns
+            features_list = features_list[features_list != 'meter_reading']
             kf = KFold(n_splits=us.get_trees_settings('cv'), random_state=c.FAVOURITE_NUMBER, shuffle=True)
 
             if len(site_id) == 1:
