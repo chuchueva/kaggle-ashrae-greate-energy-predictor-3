@@ -26,7 +26,8 @@ def get_trees_settings(setting_type, site_id=None):
             'objective': 'regression',
             'num_leaves': 10,
             'learning_rate': 0.01,
-            'num_boost_round': lgboost_num_boost_round(site_id),
+            # 'num_boost_round': lgboost_num_boost_round(site_id),
+            'num_boost_round': 400,
             'metric': 'rmse'
         },
 

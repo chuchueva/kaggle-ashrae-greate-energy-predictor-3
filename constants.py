@@ -11,7 +11,7 @@ TRAIN_FILE = 'train.csv'
 WEATHER_TRAIN_FILE = 'weather_train.csv'
 WEATHER_TEST_FILE = 'weather_test.csv'
 BUILDING_FILE = 'building_metadata.csv'
-FILTER_SETTINGS_FILE = 'clean-settings.csv'
+FILTER_SETTINGS_FILE = 'clean-settings-17.csv'
 
 FAVOURITE_NUMBER = 145
 
