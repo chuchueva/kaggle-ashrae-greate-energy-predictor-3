@@ -61,28 +61,6 @@ def read_building_data():
     return df_building_out
 
 
-# def find_constant(target, min_length=48):
-#
-#     values = list()
-#
-#     if any(target):
-#
-#         t = target['meter_reading'].values
-#         splitted_target = np.split(t, np.where(t[1:] != t[:-1])[0] + 1)
-#         splitted_date = np.split(target['timestamp'].values, np.where(t[1:] != t[:-1])[0] + 1)
-#
-#         for i, x in enumerate(splitted_date):
-#             if len(x) > min_length:
-#                 values.append(splitted_target[i][0])
-#
-#         if any(values):
-#             values = np.array(values)
-#             values = values[values != 0]
-#             print(values)
-#
-#     return values
-
-
 def find_constant(target, min_length=48):
 
     timestamp_to_remove = list()
@@ -112,17 +90,9 @@ def filter_by_settings(df_input):
     df_input.loc[df_input.query('meter == 0 and meter_reading == 0').index,
                  'IsFiltered'] = 1
 
-    # Special treatment for site_1
-    df_input.loc[df_input.query('(building_id >= 105 and building_id <= 155) and meter == 0 and '
-                                'timestamp == "2016-01-01 00:00:00"').index, 'IsFiltered'] = 1
-
-    # Special treatment for building 1099
+    # Special treatment for building_1099
     mask = df_input.query('building_id == 1099 and meter == 2').index
     df_input.loc[mask, 'meter_reading'] = df_input.loc[mask, 'meter_reading'] / 1000
-
-    # Special treatment for building_1167
-    df_input.loc[df_input.query('building_id == 1167 and meter == 1 and timestamp >= "2016-05-18 15:00:00" '
-                                'and timestamp <= "2016-06-25 07:00:00" ').index, 'IsFiltered'] = 1
 
     # General treatment for the rest
     building_list = np.unique(df_input['building_id'].values)
@@ -150,12 +120,15 @@ def filter_by_settings(df_input):
 
         do_const = filter_settings['do_const'].values[0]
         if do_const >= 1:
-            df_input_building = df_input.query('building_id == @building_id and meter == @meter')
-            dates_to_remove = find_constant(df_input_building[['timestamp', 'meter_reading']],
-                                            min_length=do_const.astype(int))
-            if any(dates_to_remove):
-                df_input.loc[df_input.query('building_id == @building_id and meter == @meter and '
-                                            'timestamp in @dates_to_remove').index, 'IsFiltered'] = 1
+            try:
+                df_input_building = df_input.query('building_id == @building_id and meter == @meter')
+                dates_to_remove = find_constant(df_input_building[['timestamp', 'meter_reading']],
+                                                min_length=do_const.astype(int))
+                if any(dates_to_remove):
+                    df_input.loc[df_input.query('building_id == @building_id and meter == @meter and '
+                                                'timestamp in @dates_to_remove').index, 'IsFiltered'] = 1
+            except ValueError:
+                print('Remove do_const settings for %d building %d meter' % (building_id, meter))
 
         # print('Building %d meter %d is filtered' % (building_id, meter))
 
