@@ -20,8 +20,8 @@ test_file = c.WEATHER_TEST_FILE
 building_file = c.BUILDING_FILE
 
 # What to drop
-features_to_drop = ['precip_depth_1_hr', 'cloud_coverage', 'wind_direction', 'sea_level_pressure',
-                    'timestamp_aligned', 'time_offset']
+features_to_drop = ['timestamp_aligned', 'time_offset', 'cloud_coverage', 'precip_depth_1_hr',
+                    'wind_direction', 'sea_level_pressure']
 
 # What to extrapolate
 cols_to_fill = ['air_temperature', 'dew_temperature', 'wind_speed']
@@ -74,10 +74,13 @@ for sid in sorted(df_weather.site_id.unique()):
 
         s = df_weather.loc[df_weather.site_id == sid, [col, 'timestamp']].copy()
         s.dropna(inplace=True)
-        int_func = interp1d(s.timestamp.values.astype(np.float64), s[col].values,
-                            kind='linear', fill_value='extrapolate')
-        s_values_new = int_func(x_total.copy().values.astype(np.float64))
-        df_weather_cleaned[col] = s_values_new
+        try:
+            int_func = interp1d(s.timestamp.values.astype(np.float64), s[col].values,
+                                kind='linear', fill_value='extrapolate')
+            s_values_new = int_func(x_total.copy().values.astype(np.float64))
+            df_weather_cleaned[col] = s_values_new
+        except ValueError:
+            print('*** There is no %s data for site %d' % (col, sid))
 
     file_name = '%s%s_site_%d.feather' % (clean_folder, result_file_name, sid)
     df_weather_cleaned.to_feather(file_name)

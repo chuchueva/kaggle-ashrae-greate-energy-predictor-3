@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import math as math
 import constants as c
+import utils_settings as us
+import holidays
 from fbprophet import Prophet
 from sklearn.linear_model import LinearRegression
 from scipy.interpolate import interp1d
@@ -145,24 +147,11 @@ def get_error(v1, v2):
     return sqrt(mean_squared_error(v1, v2))
 
 
-def prepare_data(x, building_data, weather_data, make_log=True):
+def consumption_feature_engineering(df):
 
-    df = x.merge(building_data, on='building_id', how='left')
-    df = df.merge(weather_data, on=['site_id', 'timestamp'], how='left')
+    fs = us.get_feature_settings()
 
     df.index = pd.to_datetime(df.timestamp, format='%Y-%m-%d %H:%M:%S')
-
-    drop_features = ['timestamp']
-    df.drop(drop_features, axis=1, inplace=True)
-
-    if ('meter_reading' in df) & make_log:
-        df['meter_reading'] = np.log1p(df['meter_reading'])
-
-    return df
-
-
-def feature_engineering(df):
-
     df['weekday'] = df.index.dayofweek
     df['hour'] = df.index.hour
     df['month'] = df.index.month
@@ -171,48 +160,104 @@ def feature_engineering(df):
     df.loc[df.index.month.isin([6, 7, 8]), 'season'] = 2
     df.loc[df.index.month.isin([9, 10, 11]), 'season'] = 3
 
-    settings = [1, 5]
-
+    settings = fs['consumption_sins']
     for w in settings:
         df['sin_' + str(w)] = np.square(np.sin(df.index.dayofyear.astype('float64') / 365 * w * math.pi).values)
 
-    df['primary_use'] = df['primary_use'].map(c.PRIMARY_USE_MAP).astype(np.uint8)
-
-    cf = ['building_id', 'primary_use', 'hour', 'weekday', 'month', 'season']
-
-    return df, cf
-
-
-def create_lags(df):
-
-    feature_cols = ['air_temperature', 'dew_temperature', 'wind_speed']
-    settings = [24, 168]
-
-    for site_id in range(16):
-
-        mask = df['site_id'] == site_id
-
-        for feature in feature_cols:
-            col_names_lags = [feature + '_lag_' + str(shift) for shift in settings]
-
-            for idx in range(0, len(settings)):
-                df.loc[mask, col_names_lags[idx]] = df.loc[mask, feature].shift(settings[idx])
+    if fs['do_building_meter_reading_count']:
+        df['building_meter_reading_count'] = df.groupby(['building_id', 'meter'])['building_id'].transform('count')
+        df['building_meter_reading_count'] = df['building_meter_reading_count'].astype(np.uint16)
 
     return df
 
 
-def create_window_averages(df, window):
+def weather_feature_engineering(df):
 
-    feature_cols = ['air_temperature', 'dew_temperature', 'wind_speed']
+    fs = us.get_feature_settings()
+
+    # Humidity
+
+    if fs['do_humidity']:
+
+        saturated_vapor_pressure = 6.11 * (
+                    10.0 ** (7.5 * df['air_temperature'] / (237.3 + df['air_temperature'])))
+        actual_vapor_pressure = 6.11 * (
+                    10.0 ** (7.5 * df['dew_temperature'] / (237.3 + df['dew_temperature'])))
+        df['humidity'] = (actual_vapor_pressure / saturated_vapor_pressure) * 100
+        df['humidity'] = df['humidity'].astype(np.float16)
+
+    feature_cols = fs['weather_lag_vars']
+    lag_values = fs['weather_lag_values']
+
+    # lags
+
+    for site_id in range(c.SITE_ID_RANGE):
+
+        mask = df['site_id'] == site_id
+
+        for feature in feature_cols:
+            col_names_lags = [feature + '_lag_' + str(shift) for shift in lag_values]
+
+            for idx in range(0, len(lag_values)):
+                df.loc[mask, col_names_lags[idx]] = df.loc[mask, feature].shift(lag_values[idx])
+
+    # window_average
+
+    feature_cols = fs['weather_average_vars']
+    window = fs['weather_average_window']
+
     df_site = df.groupby('site_id')
 
     df_rolled = df_site[feature_cols].rolling(window=window, min_periods=0)
     df_mean = df_rolled.mean().reset_index().astype(np.float16)
-    df_median = df_rolled.median().reset_index().astype(np.float16)
+    df_std = df_rolled.std().reset_index().astype(np.float16)
 
     for feature in feature_cols:
         df[f'{feature}_mean_window_{window}'] = df_mean[feature]
-        df[f'{feature}_median_window_{window}'] = df_median[feature]
+        df[f'{feature}_std_window_{window}'] = df_std[feature]
+
+    # holidays
+
+    if fs['do_holidays']:
+
+        en_holidays = holidays.England()
+        ir_holidays = holidays.Ireland()
+        ca_holidays = holidays.Canada()
+        us_holidays = holidays.UnitedStates()
+
+        en_sites = c.SITE_COUNTRIES.get('England')
+        ir_sites = c.SITE_COUNTRIES.get('Ireland')
+        ca_sites = c.SITE_COUNTRIES.get('Canada')
+        us_sites = c.SITE_COUNTRIES.get('United_States')
+
+        en_idx = df.query('site_id in @en_sites').index
+        ir_idx = df.query('site_id in @ir_sites').index
+        ca_idx = df.query('site_id in @ca_sites').index
+        us_idx = df.query('site_id in @us_sites').index
+
+        df['is_holiday'] = 0
+        df.loc[en_idx, 'is_holiday'] = df.loc[en_idx, 'timestamp'].apply(lambda x: en_holidays.get(x, default=0))
+        df.loc[ir_idx, 'is_holiday'] = df.loc[ir_idx, 'timestamp'].apply(lambda x: ir_holidays.get(x, default=0))
+        df.loc[ca_idx, 'is_holiday'] = df.loc[ca_idx, 'timestamp'].apply(lambda x: ca_holidays.get(x, default=0))
+        df.loc[us_idx, 'is_holiday'] = df.loc[us_idx, 'timestamp'].apply(lambda x: us_holidays.get(x, default=0))
+
+        holiday_idx = df['is_holiday'] != 0
+        df.loc[holiday_idx, 'is_holiday'] = 1
+        df['is_holiday'] = df['is_holiday'].astype(np.uint8)
+
+    return df
+
+
+def prepare_data(x, building_data, weather_data, make_log=True):
+
+    df = x.merge(building_data, on='building_id', how='left')
+    df = df.merge(weather_data, on=['site_id', 'timestamp'], how='left')
+    df.drop('timestamp', axis=1, inplace=True)
+
+    if ('meter_reading' in df) & make_log:
+        df['meter_reading'] = np.log1p(df['meter_reading'])
+
+    df['primary_use'] = df['primary_use'].map(c.PRIMARY_USE_MAP).astype(np.uint8)
 
     return df
 
@@ -325,7 +370,7 @@ def undo_normalisation(df, scaler):
     return df_out
 
 
-def blend(df_p, b_list):
+def get_average(df_p, b_list):
 
     x = np.nanmean(df_p[b_list], axis=1)
     x = np.expm1(x)

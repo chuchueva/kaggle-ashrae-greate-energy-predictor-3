@@ -23,12 +23,33 @@ def get_trees_settings(setting_type, site_id=None):
         'cv': 2,
 
         'lgb_params': {
+
+            # option 1:
             'objective': 'regression',
             'num_leaves': 10,
             'learning_rate': 0.01,
             # 'num_boost_round': lgboost_num_boost_round(site_id),
             'num_boost_round': 400,
             'metric': 'rmse'
+
+            # option 2 (looks overfitted)
+            # 'num_leaves': 2 ** 9,
+            # 'learning_rate': 0.05,
+            # 'bagging_fraction': 0.9,
+            # 'bagging_freq': 5,
+            # 'feature_fraction': 0.8,
+            # 'feature_fraction_bynode': 0.7,
+            # 'min_data_in_leaf': 1000,
+            # 'max_depth': -1,
+            # 'objective': 'regression',
+            # 'seed': c.FAVOURITE_NUMBER,
+            # 'feature_fraction_seed': c.FAVOURITE_NUMBER,
+            # 'bagging_seed': c.FAVOURITE_NUMBER,
+            # 'drop_seed': c.FAVOURITE_NUMBER,
+            # 'data_random_seed': c.FAVOURITE_NUMBER,
+            # 'boosting_type': 'gbdt',
+            # 'verbose': 1,
+            # 'metric': 'rmse'
         },
 
         'xgb_params': {
@@ -87,3 +108,22 @@ def lgboost_num_boost_round(site_id):
         ss = ss
 
     return ss
+
+
+def get_feature_settings():
+
+    fs = dict()
+
+    fs['do_humidity'] = False
+    fs['do_holidays'] = False
+    fs['do_building_meter_reading_count'] = False
+
+    fs['weather_lag_vars'] = ['air_temperature']
+    fs['weather_lag_values'] = [1, 2, 3, 4, 5, 6, 12, 18, 24]
+
+    fs['weather_average_vars'] = []
+    fs['weather_average_window'] = 24
+
+    fs['consumption_sins'] = [1, 5]
+
+    return fs

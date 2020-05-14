@@ -53,8 +53,9 @@ for model_type in model_type_list:
         df_weather = ud.read_weather_data(site_id_list_uni)
         df_train = ud.read_consumption_data(site_id_list_uni, meter_list_uni, data_type='train')
 
+        df_weather = ud.weather_feature_engineering(df_weather)
+        df_train = ud.consumption_feature_engineering(df_train)
         df_train = ud.prepare_data(df_train, df_building, df_weather)
-        df_train, categorical_features = ud.feature_engineering(df_train)
 
         models = dict()
 
@@ -65,17 +66,22 @@ for model_type in model_type_list:
 
         for meter in meter_list:
 
-            meter = list(np.array(meter)[np.isin(meter, meter_list_by_site)])
+            categorical_features = ['site_id', 'building_id', 'meter', 'primary_use', 'hour', 'weekday', 'month',
+                                    'season']
+            features_list = list(df_train.columns)
 
-            features_list = df_train.columns
-            features_list = features_list[features_list != 'meter_reading']
-            kf = KFold(n_splits=us.get_trees_settings('cv'), random_state=c.FAVOURITE_NUMBER, shuffle=True)
-
+            features_list.remove('meter_reading')
             if len(site_id) == 1:
-                features_list = features_list[features_list != 'site_id']
+                features_list.remove('site_id')
+                categorical_features.remove('site_id')
             if len(meter) == 1:
-                features_list = features_list[features_list != 'meter']
+                features_list.remove('meter')
+                categorical_features.remove('meter')
 
+            print('Feature list: %s' % features_list)
+
+            meter = list(np.array(meter)[np.isin(meter, meter_list_by_site)])
+            kf = KFold(n_splits=us.get_trees_settings('cv'), random_state=c.FAVOURITE_NUMBER, shuffle=True)
             mask = (df_train['site_id'].isin(site_id)) & (df_train['meter'].isin(meter))
 
             if any(mask):

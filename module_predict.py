@@ -27,12 +27,11 @@ start_time = time.time()
 
 random.seed(c.FAVOURITE_NUMBER)
 
-result_to_update_file = 'late_model_29.csv'
-result_new_file = 'late_model_40.csv'
-model_folder = 'model_40'
+result_to_update_file = 'late_model_nan.csv'
+result_new_file = 'late_model_63_2.csv'
+model_folder = 'model_63_2'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
-# model_files = ['model_regress.pickle', 'model_trees.pickle']
 
 model_list = []
 
@@ -56,13 +55,14 @@ for model in model_list:
 
 meter_list = ud.flat_list(meter_list)
 site_id_list = ud.flat_list(site_id_list)
-df_building = ud.read_building_data()
 
+df_building = ud.read_building_data()
 df_weather = ud.read_weather_data(site_id_list)
 df_predict = ud.read_consumption_data(site_id_list, meter_list, data_type='test')
 
+df_weather = ud.weather_feature_engineering(df_weather)
+df_predict = ud.consumption_feature_engineering(df_predict)
 df_predict = ud.prepare_data(df_predict, df_building, df_weather)
-df_predict, categorical_features = ud.feature_engineering(df_predict)
 
 print('****************************************************************************')
 print('Data is ready, time %.0f sec' % (time.time() - start_time))
@@ -173,8 +173,7 @@ if 'prophet' in df_predict:
 '''
 
 print('Blend_list: %s' % blend_list)
-output_array = ud.blend(df_predict, blend_list)
-# output_array[:, 1] = output_array[:, 1] * 0.5
+output_array = ud.get_average(df_predict, blend_list)
 
 if output_array.shape[1] == 2:
     df_output = pd.read_csv(result_to_update_file)
