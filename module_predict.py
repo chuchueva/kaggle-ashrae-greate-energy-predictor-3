@@ -28,8 +28,8 @@ start_time = time.time()
 random.seed(c.FAVOURITE_NUMBER)
 
 result_to_update_file = 'late_model_nan.csv'
-result_new_file = 'late_model_63_2.csv'
-model_folder = 'model_63_2'
+result_new_file = 'late_model_75.csv'
+model_folder = 'model_75'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
 
@@ -180,5 +180,5 @@ if output_array.shape[1] == 2:
     df_output.index = df_output['row_id'].values
     df_output.drop(columns=['row_id'], inplace=True)
     df_output.loc[output_array[:, 0], 'meter_reading'] = output_array[:, 1]
-    df_output.to_csv(result_new_file, index=True, index_label='row_id', float_format='%.2f')
+    df_output.to_csv(result_new_file, index=True, index_label='row_id', float_format='%.0f')
     print('File is written, time %.0f sec' % (time.time() - start_time))

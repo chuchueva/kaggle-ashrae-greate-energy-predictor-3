@@ -3,7 +3,6 @@ import numpy as np
 
 
 def get_regress_settings():
-
     regress_settings = {
         'col_name_x': ['sin_1', 'air_temperature'],
         'col_name_y': ['meter_reading'],
@@ -28,34 +27,14 @@ def get_trees_settings(setting_type, site_id=None):
             'objective': 'regression',
             'num_leaves': 10,
             'learning_rate': 0.01,
-            # 'num_boost_round': lgboost_num_boost_round(site_id),
-            'num_boost_round': 400,
+            'num_boost_round': boost_settings('lgb_params', 'num_boost_round', site_id),
             'metric': 'rmse'
-
-            # option 2 (looks overfitted)
-            # 'num_leaves': 2 ** 9,
-            # 'learning_rate': 0.05,
-            # 'bagging_fraction': 0.9,
-            # 'bagging_freq': 5,
-            # 'feature_fraction': 0.8,
-            # 'feature_fraction_bynode': 0.7,
-            # 'min_data_in_leaf': 1000,
-            # 'max_depth': -1,
-            # 'objective': 'regression',
-            # 'seed': c.FAVOURITE_NUMBER,
-            # 'feature_fraction_seed': c.FAVOURITE_NUMBER,
-            # 'bagging_seed': c.FAVOURITE_NUMBER,
-            # 'drop_seed': c.FAVOURITE_NUMBER,
-            # 'data_random_seed': c.FAVOURITE_NUMBER,
-            # 'boosting_type': 'gbdt',
-            # 'verbose': 1,
-            # 'metric': 'rmse'
         },
 
         'xgb_params': {
-            'max_depth': 35,
-            'learning_rate': 0.05,
-            'n_estimators': 35
+            'max_depth': 10,
+            'learning_rate': 0.15,
+            'n_estimators': 20
         },
 
         'cat_params': {
@@ -81,29 +60,52 @@ def get_trees_settings(setting_type, site_id=None):
     return ss
 
 
-def lgboost_num_boost_round(site_id):
+def boost_settings(model, setting_name, site_id):
 
     settings = {
-        0: 180,
-        1: 210,
-        2: 720,
-        3: 75,
-        4: 90,
-        5: 120,
-        6: 1500,
-        7: 1500,
-        8: 90,
-        9: 1500,
-        10: 1500,
-        11: 240,
-        12: 60,
-        13: 1500,
-        14: 1500,
-        15: 375
-
+        'lgb_params': {
+            'num_boost_round': {
+                0: 400,
+                1: 400,
+                2: 400,
+                3: 400,
+                4: 400,
+                5: 400,
+                6: 1000,
+                7: 1000,
+                8: 400,
+                9: 1000,
+                10: 1000,
+                11: 400,
+                12: 400,
+                13: 1000,
+                14: 1000,
+                15: 400
+            }
+        },
+        'xgb_params': {
+            'n_estimators': {
+                0: 20,
+                1: 20,
+                2: 20,
+                3: 20,
+                4: 20,
+                5: 20,
+                6: 25,
+                7: 25,
+                8: 20,
+                9: 25,
+                10: 25,
+                11: 20,
+                12: 20,
+                13: 25,
+                14: 25,
+                15: 20
+            }
+        }
     }
 
-    ss = settings.get(site_id)
+    ss = settings.get(model).get(setting_name).get(site_id)
     if ss is not None:
         ss = ss
 
@@ -111,7 +113,6 @@ def lgboost_num_boost_round(site_id):
 
 
 def get_feature_settings():
-
     fs = dict()
 
     fs['do_humidity'] = False

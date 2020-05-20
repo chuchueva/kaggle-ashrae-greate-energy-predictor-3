@@ -38,7 +38,7 @@ Read data
 
 site_id_list = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15]]
 meter_list = [[0, 1, 2, 3]]
-model_type_list = ['lgboost']           # 'xgboost', 'lgboost', 'ctboost'
+model_type_list = ['xgboost']           # 'xgboost', 'lgboost', 'ctboost'
 target_name = 'meter_reading'
 
 for model_type in model_type_list:
@@ -126,7 +126,7 @@ for model_type in model_type_list:
                     if model_type == 'xgboost':
 
                         # XGBoost
-                        model_xgb = XGBRegressor(**us.get_trees_settings('xgb_params'))
+                        model_xgb = XGBRegressor(**us.get_trees_settings('xgb_params', site_id=site_id[0]))
                         model_xgb.fit(X_train, y_train,
                                       eval_set=[(X_train, y_train), (X_valid, y_valid)],
                                       eval_metric='rmse',
