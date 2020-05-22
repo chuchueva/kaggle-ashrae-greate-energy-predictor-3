@@ -28,8 +28,8 @@ start_time = time.time()
 random.seed(c.FAVOURITE_NUMBER)
 
 result_to_update_file = 'late_model_nan.csv'
-result_new_file = 'late_model_75.csv'
-model_folder = 'model_75'
+result_new_file = 'late_model_80.csv'
+model_folder = 'model_80_regress'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
 
@@ -80,7 +80,7 @@ for model in model_list:
         
     '''
 
-    if model['model_type'] in ['lgboost', 'xgboost', 'ctboost']:
+    if model['model_type'] in ['lgboost', 'xgboost', 'ctboost', 'network']:
 
         features_list = df_predict.columns[np.invert(df_predict.columns.isin(['row_id']))]
 
@@ -95,7 +95,7 @@ for model in model_list:
                     features_list = model[name]
                     X_predict = df_predict.loc[mask, features_list].reset_index(drop=True)
 
-                    for fold in range(us.get_trees_settings('cv')):
+                    for fold in range(c.K_FOLD):
 
                         col_name = '%s_%d' % (model['model_type'], fold)
 
@@ -114,6 +114,18 @@ for model in model_list:
                             model_name = ud.get_name(model['model_type'], site=site_id, meter=meter, cv=str(fold))
                             categorical_features_indices = np.where(X_predict.dtypes != np.float)[0]
                             y_pred = model[model_name].predict(X_predict)
+
+                        # Network
+                        if model['model_type'] == 'network':
+                            model_name = ud.get_name(model['model_type'], site=site_id, meter=meter, cv=str(fold))
+                            scaler_name = ud.get_name('scaler', site=site_id, meter=meter, cv=str(fold))
+                            X_predict['floor_count'] = X_predict['floor_count'].fillna(0)
+                            X_predict['year_built'] = X_predict['year_built'].fillna(0)
+                            X_predict['square_feet'] = X_predict['square_feet'].fillna(0)
+                            X_predict_scaled, _ = ud.do_normalisation(X_predict, model[scaler_name])
+                            y_pred_scaled = model[model_name].predict(X_predict_scaled)
+                            y_pred = ud.undo_normalisation(pd.DataFrame(y_pred_scaled, columns=['meter_reading']),
+                                                           model[scaler_name]).values
 
                         df_predict.loc[mask, col_name] = y_pred
 
@@ -135,7 +147,9 @@ for model in model_list:
     if model['model_type'] in ['regress', 'prophet']:
 
         settings = us.get_regress_settings()
-        df_predict[model['model_type']] = np.nan
+
+        if model['model_type'] not in df_predict:
+            df_predict[model['model_type']] = np.nan
 
         for single_building in model['building_list']:
 
@@ -151,13 +165,15 @@ for model in model_list:
                     _, pred = um.get_regress(df_sample_building, settings, model=model[name])
                 elif model['model_type'] == 'prophet':
                     _, pred = um.get_prophet(df_sample_building, settings, model=model[name])
-                df_predict.loc[mask, model['model_type']] = pred
+
+                # plt.plot(np.arange(pred.shape[0]), pred, '*', label='model')
+                # plt.show()
+                df_predict.loc[mask, model['model_type']] = pred.ravel()
 
             print('%s model is done for building %d, time %.0f sec' %
                   (model['model_type'], building, time.time() - start_time))
 
-    t = ud.get_name('Forecast is done for ', site=site_id, meter=meter)
-    print('%s: type %s, time %.0f sec' % (t, model['model_type'], time.time() - start_time))
+    print('%s: time %.0f sec' % (model['model_type'], time.time() - start_time))
     print('****************************************************************************')
 
 if 'regress' in df_predict:

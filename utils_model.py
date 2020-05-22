@@ -17,11 +17,6 @@ from math import sqrt
 
 def get_regress(df, settings, model=None):
 
-    sins = [1]
-    for w in sins:
-        col_name = 'sin_' + str(w)
-        df[col_name] = np.square(np.sin(df.index.dayofyear.astype('float64') / 365 * w * math.pi).values)
-
     x_train = df[settings['col_name_x']]
     y_pred_regress = np.zeros(len(df))
 

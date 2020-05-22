@@ -252,12 +252,14 @@ def prepare_data(x, building_data, weather_data, make_log=True):
 
     df = x.merge(building_data, on='building_id', how='left')
     df = df.merge(weather_data, on=['site_id', 'timestamp'], how='left')
-    df.drop('timestamp', axis=1, inplace=True)
 
     if ('meter_reading' in df) & make_log:
         df['meter_reading'] = np.log1p(df['meter_reading'])
 
     df['primary_use'] = df['primary_use'].map(c.PRIMARY_USE_MAP).astype(np.uint8)
+
+    df.index = pd.to_datetime(df.timestamp, format='%Y-%m-%d %H:%M:%S')
+    df.drop('timestamp', axis=1, inplace=True)
 
     return df
 
@@ -352,6 +354,10 @@ def do_normalisation(df, scaler):
         scaler['p2'] = set_p2
         scaler['predictors'] = df.columns
 
+    if any(set_p2 == 0):
+        mask = set_p2 == 0
+        set_p2[mask] = 0.01
+
     x -= set_p1
     x /= set_p2
 
@@ -374,9 +380,6 @@ def get_average(df_p, b_list):
 
     x = np.nanmean(df_p[b_list], axis=1)
     x = np.expm1(x)
-    if any(np.isnan(x)):
-        print('ERROR: nan is in output array')
-        return x
     y = df_p['row_id']
     xy = np.column_stack((y, x))
     print('Blending is done!')

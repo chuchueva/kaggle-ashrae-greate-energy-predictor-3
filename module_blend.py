@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 
-result_to_blend = ['late_model_69_1.csv', 'late_model_69_2.csv']
-result_file = 'late_model_69.csv'
+result_to_blend = ['late_model_80.csv', 'late_model_64.csv']
+result_file = 'late_model_80_mixed.csv'
+mode = 'replace'        # mean
+
 mr = []
 
 for f in result_to_blend:
@@ -10,8 +12,14 @@ for f in result_to_blend:
     mr.append(df_output['meter_reading'])
 
 x = np.column_stack(mr)
+if mode == 'replace':
+    mask = np.isnan(x[:, 0])
+    df_output.loc[mask, 'meter_reading'] = x[mask, 1]
+    df_output.loc[np.invert(mask), 'meter_reading'] = x[np.invert(mask), 0]
+    print('%.0f%% nans are be replaced from %s' % (sum(mask)/len(df_output)*100, result_to_blend[1]))
+else:
+    df_output['meter_reading'] = np.nanmean(x, axis=1)
 
-df_output['meter_reading'] = np.nanmean(x, axis=1)
 df_output.drop(columns=['row_id'], inplace=True)
 df_output.to_csv(result_file, index=True, index_label='row_id', float_format='%.0f')
 print('File %s is written' % result_file)

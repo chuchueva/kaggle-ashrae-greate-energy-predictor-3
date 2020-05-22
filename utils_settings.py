@@ -3,6 +3,7 @@ import numpy as np
 
 
 def get_regress_settings():
+
     regress_settings = {
         'col_name_x': ['sin_1', 'air_temperature'],
         'col_name_y': ['meter_reading'],
@@ -19,16 +20,14 @@ def get_trees_settings(setting_type, site_id=None):
 
     settings = {
 
-        'cv': 2,
-
         'lgb_params': {
 
-            # option 1:
             'objective': 'regression',
             'num_leaves': 10,
             'learning_rate': 0.01,
             'num_boost_round': boost_settings('lgb_params', 'num_boost_round', site_id),
             'metric': 'rmse'
+
         },
 
         'xgb_params': {
@@ -39,19 +38,18 @@ def get_trees_settings(setting_type, site_id=None):
 
         'cat_params': {
             'depth': 10,
-            'learning_rate': 1,
-            'iterations': 15,
+            'learning_rate': 0.7,
+            'iterations': 25,
             'eval_metric': 'RMSE',
-            'random_seed': c.FAVOURITE_NUMBER,
             'verbose': True
         },
 
         'network_params': {
             'horison': 1,
             'neuron_number': 24,
-            'epochs': 30,
+            'epochs': 35,
             'batch_size': 1000,
-            'learning_rate': 0.00002
+            'learning_rate': 0.0005
         }
     }
 
@@ -82,32 +80,10 @@ def boost_settings(model, setting_name, site_id):
                 14: 1000,
                 15: 400
             }
-        },
-        'xgb_params': {
-            'n_estimators': {
-                0: 20,
-                1: 20,
-                2: 20,
-                3: 20,
-                4: 20,
-                5: 20,
-                6: 25,
-                7: 25,
-                8: 20,
-                9: 25,
-                10: 25,
-                11: 20,
-                12: 20,
-                13: 25,
-                14: 25,
-                15: 20
-            }
         }
     }
 
     ss = settings.get(model).get(setting_name).get(site_id)
-    if ss is not None:
-        ss = ss
 
     return ss
 
@@ -115,8 +91,8 @@ def boost_settings(model, setting_name, site_id):
 def get_feature_settings():
     fs = dict()
 
-    fs['do_humidity'] = False
-    fs['do_holidays'] = False
+    fs['do_humidity'] = True
+    fs['do_holidays'] = True
     fs['do_building_meter_reading_count'] = False
 
     fs['weather_lag_vars'] = ['air_temperature']

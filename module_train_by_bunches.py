@@ -38,7 +38,7 @@ Read data
 
 site_id_list = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15]]
 meter_list = [[0, 1, 2, 3]]
-model_type_list = ['xgboost']           # 'xgboost', 'lgboost', 'ctboost'
+model_type_list = ['network']           # 'xgboost', 'lgboost', 'ctboost' , 'network'
 target_name = 'meter_reading'
 
 for model_type in model_type_list:
@@ -81,7 +81,7 @@ for model_type in model_type_list:
             print('Feature list: %s' % features_list)
 
             meter = list(np.array(meter)[np.isin(meter, meter_list_by_site)])
-            kf = KFold(n_splits=us.get_trees_settings('cv'), random_state=c.FAVOURITE_NUMBER, shuffle=True)
+            kf = KFold(n_splits=c.K_FOLD, random_state=c.FAVOURITE_NUMBER, shuffle=True)
             mask = (df_train['site_id'].isin(site_id)) & (df_train['meter'].isin(meter))
 
             if any(mask):
@@ -151,6 +151,7 @@ for model_type in model_type_list:
                         cat_model.fit(X_train, y_train,
                                       eval_set=(X_valid, y_valid),
                                       cat_features=categorical_features_indices)
+
                         name = ud.get_name(model_type, site=site_id, meter=meter, cv=str(fold))
                         models[name] = cat_model
                         y_pred_valid = cat_model.predict(X_valid)
@@ -166,12 +167,15 @@ for model_type in model_type_list:
 
                         settings = us.get_trees_settings('network_params')
                         data = df_train.loc[mask, [*features_list, target_name]].reset_index(drop=True)
-                        data.dropna(axis=1, inplace=True)
+                        data['floor_count'] = data['floor_count'].fillna(0)
+                        data['year_built'] = data['year_built'].fillna(0)
+                        data['square_feet'] = data['square_feet'].fillna(0)
+                        data.dropna(axis=0, inplace=True)
                         data_scaled, scaler = ud.do_normalisation(data, dict())
-                        X_train = data_scaled.loc[train_index, features_list.isin(data.columns)]
-                        X_valid = data_scaled.loc[valid_index, features_list.isin(data.columns)]
-                        y_train = data_scaled.iloc[train_index, [*df_train.columns].index(target_name)]
-                        y_valid = data_scaled.iloc[valid_index, [*df_train.columns].index(target_name)]
+                        X_train = data_scaled.loc[train_index, features_list]
+                        X_valid = data_scaled.loc[valid_index, features_list]
+                        y_train = data_scaled.loc[train_index, target_name]
+                        y_valid = data_scaled.loc[valid_index, target_name]
 
                         # Dense
                         network = Sequential()
@@ -185,22 +189,24 @@ for model_type in model_type_list:
                                               batch_size=settings['batch_size'], verbose=True,
                                               validation_data=(X_valid, y_valid))
 
-                        X_ = data_scaled.loc[train_index, features_list.isin(data.columns)]
-
                         name = ud.get_name(model_type, site=site_id, meter=meter, cv=str(fold))
                         models[name] = network
+                        scaler_name = ud.get_name('scaler', site=site_id, meter=meter, cv=str(fold))
+                        models[scaler_name] = scaler
+
                         y_pred_valid = network.predict(X_valid)
                         y_pred_train_site[valid_index] = y_pred_valid.ravel()
                         y_pred_train = network.predict(X_train)
                         y_pred_train_site[train_index] = y_pred_train.ravel()
-                        y_pred_train_site = ud.undo_normalisation(pd.DataFrame(y_pred_train_site, columns=[target_name]),
-                                                                  scaler)
+
+                        y_pred_train_site = ud.undo_normalisation(pd.DataFrame(y_pred_train_site,
+                                                                               columns=[target_name]), scaler)
                         df_train.loc[mask, '%s_%d' % (model_type, fold)] = y_pred_train_site.values
 
                 del X_train, X_valid, y_train, y_valid
                 gc.collect()
 
-        cols = [model_type + '_' + str(f) for f in range(us.get_trees_settings('cv'))]
+        cols = [model_type + '_' + str(f) for f in range(c.K_FOLD)]
         df_train[model_type] = np.nanmean(df_train[cols], axis=1)
         mask = np.invert(np.isnan(df_train[model_type].values))
         rmsle = ud.get_error(df_train.loc[mask, 'meter_reading'].values, df_train.loc[mask, model_type].values)
