@@ -46,10 +46,10 @@ def get_trees_settings(setting_type, site_id=None):
 
         'network_params': {
             'horison': 1,
-            'neuron_number': 24,
+            'neuron_number': 60,
             'epochs': 35,
             'batch_size': 1000,
-            'learning_rate': 0.0005
+            'learning_rate': 0.001
         }
     }
 

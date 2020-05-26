@@ -28,8 +28,8 @@ start_time = time.time()
 random.seed(c.FAVOURITE_NUMBER)
 
 result_to_update_file = 'late_model_nan.csv'
-result_new_file = 'late_model_80.csv'
-model_folder = 'model_80_regress'
+result_new_file = 'late_model_85_2.csv'
+model_folder = 'model_85_2'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
 
