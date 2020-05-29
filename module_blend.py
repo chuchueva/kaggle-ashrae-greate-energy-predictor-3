@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 
-result_to_blend = ['late_model_85_1.csv', 'late_model_85_2.csv']
-result_file = 'late_model_85.csv'
+result_to_blend = ['late_model_108.csv', 'late_model_64.csv', 'late_model_71.csv']
+result_file = 'late_model_112.csv'
 mode = 'mean'        # mean, replace
 
 mr = []

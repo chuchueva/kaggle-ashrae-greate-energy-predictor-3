@@ -28,8 +28,8 @@ start_time = time.time()
 random.seed(c.FAVOURITE_NUMBER)
 
 result_to_update_file = 'late_model_nan.csv'
-result_new_file = 'late_model_85_2.csv'
-model_folder = 'model_85_2'
+result_new_file = 'late_model_test.csv'
+model_folder = 'model_test'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
 
@@ -72,7 +72,7 @@ blend_list = []
 for model in model_list:
 
     site_id_list = [model['site_id_list']]
-    meter_list = [model['meter_list']]
+    meter_list = model['meter_list']
 
     '''
         
@@ -85,6 +85,7 @@ for model in model_list:
         features_list = df_predict.columns[np.invert(df_predict.columns.isin(['row_id']))]
 
         for site_id in site_id_list:
+
             for meter in meter_list:
 
                 mask = (df_predict['site_id'].isin(site_id)) & (df_predict['meter'].isin(meter))
@@ -132,8 +133,8 @@ for model in model_list:
                         if col_name not in blend_list:
                             blend_list.append(col_name)
 
-                        print('%s for fold %d is done, time %.0f sec' %
-                              (model['model_type'], fold, time.time() - start_time))
+                        print('%s is done, time %.0f sec' %
+                              (ud.get_name(model['model_type'], site_id, meter, cv=fold), time.time() - start_time))
 
                     del X_predict
                     gc.collect()

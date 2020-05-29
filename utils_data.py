@@ -37,7 +37,10 @@ def read_consumption_data(site_id_list, meter_type_list, data_type='train'):
             except:
                 print('File %s does not exist' % (c.CLEAN_FOLDER + data_file))
 
-    df_total_out = pd.concat(df_total)
+    if len(df_total) > 0:
+        df_total_out = pd.concat(df_total)
+    else:
+        df_total_out = []
 
     return df_total_out
 
@@ -418,5 +421,6 @@ def get_name(model_type, site=None, meter=None, building=None, cv=None):
     n = n.replace('_meter_None', '')
     n = n.replace('_building_None', '')
     n = n.replace('_cv_None', '')
+    n = n.replace('__', '_')
 
     return n

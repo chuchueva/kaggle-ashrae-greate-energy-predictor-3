@@ -20,36 +20,63 @@ def get_trees_settings(setting_type, site_id=None):
 
     settings = {
 
+        # Option 1: by site, meters joined
+        # site_id_list = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15]]
+        # meter_list = [[0, 1, 2, 3]]
+
+        # 'lgb_params': {
+        #     'objective': 'regression',
+        #     'num_leaves': 10,
+        #     'learning_rate': 0.01,
+        #     'num_boost_round': boost_settings('lgb_params', 'num_boost_round', site_id),
+        #     'metric': 'rmse'
+        # },
+        #
+        # 'xgb_params': {
+        #     'max_depth': 10,
+        #     'learning_rate': 0.15,
+        #     'n_estimators': 20
+        # },
+        #
+        # 'cat_params': {
+        #     'depth': 10,
+        #     'learning_rate': 0.7,
+        #     'iterations': 25,
+        #     'eval_metric': 'RMSE',
+        #     'verbose': True
+        # },
+        #
+        # 'network_params': {
+        #     'horison': 1,
+        #     'neuron_number': 60,
+        #     'epochs': 35,
+        #     'batch_size': 1000,
+        #     'learning_rate': 0.001
+        # }
+
+        # Option 2: by site bunches, meters separate
+        # meter_list = [[0], [1], [2], [3]]
+
         'lgb_params': {
 
+            # meter 0, site_id_list = [[0, 8], [1, 5, 12], [3, 6, 7], [11, 14, 15], [9, 13], [4, 10, 2]],
+            # edge cv = 0.265
             'objective': 'regression',
-            'num_leaves': 10,
+            'num_leaves': 30,
             'learning_rate': 0.01,
-            'num_boost_round': boost_settings('lgb_params', 'num_boost_round', site_id),
+            'num_boost_round': 1200,
             'metric': 'rmse'
 
-        },
+            # meter 1, site_id_list = [[0, 8], [1, 5, 12], [3, 6, 7], [11, 14, 15], [9, 13], [4, 10, 2]],
+            # edge cv = 0.937
+            # meter 2, site_id_list = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]], edge cv = 1.125
+            # meter 3, site_id_list = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]], edge cv = 1.232
+            # 'objective': 'regression',
+            # 'num_leaves': 10,
+            # 'learning_rate': 0.01,
+            # 'num_boost_round': 800,
+            # 'metric': 'rmse'
 
-        'xgb_params': {
-            'max_depth': 10,
-            'learning_rate': 0.15,
-            'n_estimators': 20
-        },
-
-        'cat_params': {
-            'depth': 10,
-            'learning_rate': 0.7,
-            'iterations': 25,
-            'eval_metric': 'RMSE',
-            'verbose': True
-        },
-
-        'network_params': {
-            'horison': 1,
-            'neuron_number': 60,
-            'epochs': 35,
-            'batch_size': 1000,
-            'learning_rate': 0.001
         }
     }
 
