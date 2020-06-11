@@ -32,11 +32,11 @@ def get_trees_settings(setting_type, site_id=None):
         #     'metric': 'rmse'
         # },
         #
-        # 'xgb_params': {
-        #     'max_depth': 10,
-        #     'learning_rate': 0.15,
-        #     'n_estimators': 20
-        # },
+        'xgb_params': {
+            'max_depth': 10,
+            'learning_rate': 0.15,
+            'n_estimators': 20
+        }
         #
         # 'cat_params': {
         #     'depth': 10,
@@ -57,15 +57,15 @@ def get_trees_settings(setting_type, site_id=None):
         # Option 2: by site bunches, meters separate
         # meter_list = [[0], [1], [2], [3]]
 
-        'lgb_params': {
+        # 'lgb_params': {
 
             # meter 0, site_id_list = [[0, 8], [1, 5, 12], [3, 6, 7], [11, 14, 15], [9, 13], [4, 10, 2]],
             # edge cv = 0.265
-            'objective': 'regression',
-            'num_leaves': 30,
-            'learning_rate': 0.01,
-            'num_boost_round': 1200,
-            'metric': 'rmse'
+            # 'objective': 'regression',
+            # 'num_leaves': 30,
+            # 'learning_rate': 0.01,
+            # 'num_boost_round': 1200,
+            # 'metric': 'rmse'
 
             # meter 1, site_id_list = [[0, 8], [1, 5, 12], [3, 6, 7], [11, 14, 15], [9, 13], [4, 10, 2]],
             # edge cv = 0.937
@@ -74,10 +74,24 @@ def get_trees_settings(setting_type, site_id=None):
             # 'objective': 'regression',
             # 'num_leaves': 10,
             # 'learning_rate': 0.01,
-            # 'num_boost_round': 800,
+            # 'num_boost_round': 1200,
             # 'metric': 'rmse'
 
-        }
+        # },
+
+        # 'xgb_params': {
+        #     'max_depth': 10,
+        #     'learning_rate': 0.15,
+        #     'n_estimators': 30
+        # },
+        #
+        # 'network_params': {
+        #     'horison': 1,
+        #     'neuron_number': 144,
+        #     'epochs': 35,
+        #     'batch_size': 750,
+        #     'learning_rate': 0.001
+        # }
     }
 
     ss = settings.get(setting_type)
@@ -116,10 +130,11 @@ def boost_settings(model, setting_name, site_id):
 
 
 def get_feature_settings():
+
     fs = dict()
 
-    fs['do_humidity'] = True
-    fs['do_holidays'] = True
+    fs['do_humidity'] = False
+    fs['do_holidays'] = False
     fs['do_building_meter_reading_count'] = False
 
     fs['weather_lag_vars'] = ['air_temperature']

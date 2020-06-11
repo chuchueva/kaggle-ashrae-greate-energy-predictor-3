@@ -187,7 +187,7 @@ def weather_feature_engineering(df):
         actual_vapor_pressure = 6.11 * (
                     10.0 ** (7.5 * df['dew_temperature'] / (237.3 + df['dew_temperature'])))
         df['humidity'] = (actual_vapor_pressure / saturated_vapor_pressure) * 100
-        df['humidity'] = df['humidity'].astype(np.float16)
+        df['humidity'] = df['humidity'].astype(np.float)
 
     feature_cols = fs['weather_lag_vars']
     lag_values = fs['weather_lag_values']

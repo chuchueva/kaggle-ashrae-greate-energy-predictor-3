@@ -24,7 +24,7 @@ Main
 '''
 # site_id_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 site_id_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-meter_list = [0, 1, 2, 3]
+meter_list = [0]
 model_type = 'regress'          # prophet, regress
 
 settings = us.get_regress_settings()

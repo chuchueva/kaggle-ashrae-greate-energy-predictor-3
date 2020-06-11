@@ -6,10 +6,13 @@ import math as math
 import constants as c
 from fbprophet import Prophet
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge
+from scipy.optimize import least_squares
 from scipy.interpolate import interp1d
 from sklearn.cluster import KMeans
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_squared_log_error
+from scipy.optimize import Bounds
 from matplotlib import pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 from math import sqrt
@@ -85,3 +88,25 @@ def get_prophet(df, settings, model=None):
                         y_pred_prophet[mask] = y_m['yhat'].values
 
     return model, y_pred_prophet
+
+
+def model(x, u):
+    return x[0] * u[:, 0] + x[1] * u[:, 1] + x[2] * u[:, 2]
+
+
+def deviation(x, u, y):
+    return model(x, u) - y
+
+
+def get_smart_blend(x_test, x_train, actuals):
+
+    mask = np.invert(np.isnan(x_train[:, 0]))
+    u = x_train[mask]
+    y = actuals[mask]
+    x0 = np.array([0.334, 0.333, 0.333])
+    res = least_squares(deviation, x0, bounds=(0.1, 0.5), args=(u, y), verbose=1)
+    print(np.round(res.x, 4))
+    pred = res.x[0] * x_test[:, 0] + res.x[1] * x_test[:, 1] + res.x[2] * x_test[:, 2]
+
+    return pred
+

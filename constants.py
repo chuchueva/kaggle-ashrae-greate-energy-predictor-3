@@ -4,7 +4,6 @@ storage = 'E:/PythonStorage/04_ashrae_building_modelling/'
 CLEAN_FOLDER = storage + 'Cleaned/'
 SOURCE_FOLDER = storage + 'Source/'
 MODEL_FOLDER = storage + 'Models/'
-SPLIT_FOLDER = storage + 'Splited/'
 
 TEST_FILE = 'test.csv'
 TRAIN_FILE = 'train.csv'
@@ -20,7 +19,7 @@ TRAIN_FILE_TEMPLATE = 'train_site_%d_meter_%d.feather'
 TEST_FILE_TEMPLATE = 'test_site_%d_meter_%d.feather'
 MODEL_NAME_TEMPLATE = '%s_site_%s_meter_%s_building_%s_cv_%s'
 
-REGRESS_PROPHET_CV_EDGE = 0.70
+REGRESS_PROPHET_CV_EDGE = 0.30
 SITE_ID_RANGE = 16
 METER_RANGE = 4
 BUILDING_RANGE = 1450

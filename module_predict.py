@@ -28,8 +28,8 @@ start_time = time.time()
 random.seed(c.FAVOURITE_NUMBER)
 
 result_to_update_file = 'late_model_nan.csv'
-result_new_file = 'late_model_test.csv'
-model_folder = 'model_test'
+result_new_file = 'late_model_154.csv'
+model_folder = 'model_154_new_version_71'
 
 model_files = os.listdir(c.MODEL_FOLDER + model_folder)
 
@@ -59,6 +59,9 @@ site_id_list = ud.flat_list(site_id_list)
 df_building = ud.read_building_data()
 df_weather = ud.read_weather_data(site_id_list)
 df_predict = ud.read_consumption_data(site_id_list, meter_list, data_type='test')
+
+if 'meter_reading' in df_predict:
+    df_predict.drop(columns=['meter_reading'], inplace=True)
 
 df_weather = ud.weather_feature_engineering(df_weather)
 df_predict = ud.consumption_feature_engineering(df_predict)

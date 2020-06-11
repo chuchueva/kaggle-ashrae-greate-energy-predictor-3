@@ -32,16 +32,19 @@ Read data
 
 '''
 # Option 1: by site, meter joined
-# site_id_list = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15]]
-# meter_list = [[0, 1, 2, 3]]
+site_id_list = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15]]
+meter_list = [[0, 1, 2, 3]]
 
 # Option 2: by site_bunch, meter separate
 # site_id_list = [[0, 8], [1, 5, 12], [4, 10], [3, 6, 7, 11, 14, 15], [9, 13], [2]]
-site_id_list = [[0, 1], [2]]
 # site_id_list = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]]
-meter_list = [[0], [1], [2], [3]]
+# site_id_list = [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9], [10, 11], [12, 13], [14, 15]]
+# site_id_list = [[0, 2, 6], [7, 9, 10], [11, 13, 14]]
+# site_id_list = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15]]
+# site_id_list = [[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]]
+# meter_list = [[0]]
 
-model_type_list = ['lgboost']           # 'xgboost', 'lgboost', 'ctboost' , 'network'
+model_type_list = ['xgboost']           # 'xgboost', 'lgboost', 'ctboost' , 'network'
 target_name = 'meter_reading'
 
 for model_type in model_type_list:
@@ -55,6 +58,9 @@ for model_type in model_type_list:
         df_building = ud.read_building_data()
         df_weather = ud.read_weather_data(site_id_list_uni)
         df_train = ud.read_consumption_data(site_id_list_uni, meter_list_uni, data_type='train')
+
+        if 'row_id' in df_train:
+            df_train.drop(columns=['row_id'], inplace=True)
 
         if len(df_train) > 0:
 

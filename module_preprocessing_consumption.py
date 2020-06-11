@@ -17,14 +17,18 @@ Main
 '''
 site_id_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 meter_list = np.arange(c.METER_RANGE)
-data_type = 'train'                 # test
-do_filter = True                    # False (True only for train)
-do_average = True                   # if we want to write csv with averages
+data_type = 'test'                      # test, train
+do_row_id = False                       # True if we want to add row_id to train data
+do_filter = True                        # False (True only for train)
+do_average = False                      # if we want to write csv with averages
+
 
 building = pd.read_csv(c.SOURCE_FOLDER + c.BUILDING_FILE, dtype=c.BUILDING_METADATA_DTYPES)
 
 if data_type == 'train':
     df_train = pd.read_csv(c.SOURCE_FOLDER + c.TRAIN_FILE, dtype=c.TRAIN_DTYPES, parse_dates=['timestamp'])
+    if len(site_id_list) == c.SITE_ID_RANGE and do_row_id:
+        df_train['row_id'] = np.arange(len(df_train))
 else:
     df_train = pd.read_csv(c.SOURCE_FOLDER + c.TEST_FILE, dtype=c.TEST_DTYPES, parse_dates=['timestamp'])
 
